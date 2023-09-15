@@ -1,4 +1,4 @@
-Author: Jakob Rogstadius
+Author: Jakob Rogstadius (jakob.rogstadius@ri.se)
 
 # What is this?
 
