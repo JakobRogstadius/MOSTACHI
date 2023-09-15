@@ -37,7 +37,7 @@ Download and install Visual Studio 2022 Community Edition (or later) and the .Ne
 
 Load `MOSTACHI.sln` in Visual Studio. This gives your a list of the different projects included in the solution. Ensure the correct project is selected as start-up project when following the steps below to run experiments.
 
-Edit /Commons/paths.xml to match your local directory.
+Edit `/Commons/paths.xml` to match your local directory.
 
 ## How to build and run the code from the command line under Linux
 
