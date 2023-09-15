@@ -35,7 +35,7 @@ Building the code should copy `paths.xml` to the output `bin` directory. If it d
 
 Download and install Visual Studio 2022 Community Edition (or later) and the .Net SDK version 6.0 (or later).
 
-Load `MOSTACHI.sln` in Visual Studio.
+Load `MOSTACHI.sln` in Visual Studio. This gives your a list of the different projects included in the solution. Ensure the correct project is selected as start-up project when following the steps below to run experiments.
 
 Edit /Commons/paths.xml to match your local directory.
 
@@ -174,7 +174,7 @@ All output from the experiments is in the form of .csv files stored in
 
 ## Output files
 
-MOSTACHI generates several files based on each simulated scenario. These are output to the folder specified in `mostachi-source\Commons\paths.xml`, with subfolders corresponding to scenario names.
+MOSTACHI generates several files based on each simulated scenario. These are output to the folder specified in `mostachi-source/Commons/paths.xml`, with subfolders corresponding to scenario names.
 - `[scenario name]/*.driving_raster.txt` - contains aggregated data for all routes in a 5x5 km raster, for each year and vehicle type,
 - `[scenario name]/*.infra_raster.txt`- contains information about the installed capacity and utilization of each charging infrastructure site, for each year,
 - `[scenario name]/*.routes.txt` - contains information about cost-minimizing choices made for each route, vehicle type and year,
