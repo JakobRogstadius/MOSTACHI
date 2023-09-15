@@ -55,6 +55,8 @@ This will give you four executable programs in the `bin` directory:
 
 The `-c Release` option turns on optimization and parallel execution of the code. The programs can then be run from the `bin` directory. The `--use-current-runtime` option says that the program should be run by the same CLR ("C# virtual machine") used for the compile.
 
+There are no arguments to the programs. Instead, they assume that there is a file named `paths.xml` in the current directory that indicates where inputs can be read and where outputs should be written. Building the code also moves the `paths.xml` to the `bin` directory.
+
 # Preparing for running experiments
 
 ## Step 1: Create a weighted origin-destination matrix describing traffic data for your region of interest
