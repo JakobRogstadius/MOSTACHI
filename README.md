@@ -1,5 +1,3 @@
-Author: Jakob Rogstadius (jakob.rogstadius@ri.se)
-
 # What is this?
 
 This repository contains source code and input data for MOSTACHI - Model for Optimization and Simulation of Traffic And CHarging Infrastructure. MOSTACHI is a free and open-source agent-based simulation tool designed to study interaction effects in time and space between logistics patterns, competing charging infrastructure and cost-minimizing vehicle operators.
