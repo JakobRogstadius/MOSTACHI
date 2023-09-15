@@ -12,10 +12,7 @@ To study other road networks than the Swedish or other vehicle groups than heavy
 
 The simulation tool is a software program written in C# (.Net). It runs on all the main operating systems, and comes bundled with project files that can be opened in [Visual Studio 2022](https://visualstudio.microsoft.com/vs/community/) or later (a popular programming IDE on Windows) and it does not need any special hardware. If you don't have access to Visual Studio, you can still compile and run the software from the command line, or through another IDE, as long as you have installed the [.Net SDK](https://dotnet.microsoft.com/en-us/download/). The code has been tested with .NET 6.0.
 
-
-***TODO: Provide examples how to load the program in Visual Studio.***
-
-### Top level directory structure
+## Top level directory structure
 
 The top level directory (also the root of the repository) contains the following subdirectories, some of which come from the repository and some which are created by the build process:
 
@@ -26,9 +23,23 @@ The top level directory (also the root of the repository) contains the following
 - `obj` is created by the build system (not in the repository)  
 - `out` is created by the build system (not in the repository)  
 
-If you want to store data in other locations, edit `ChargingInfrastructurePlanning/Commons/paths.xml` to match your local file system. By default, it points at the `short` dataset.
+If you want to store data in other locations, edit `/MOSTACHI/Commons/paths.xml` to match your local file system. By default, it points at the `short` dataset.
 
-### How to build and run the code from the command line under Linux
+## Configuration
+
+There are no command-line arguments to the programs. File paths are specified in `/MOSTACHI/Commons/paths.xml`.
+
+Building the code should copy `paths.xml` to the output `bin` directory. If it does not, copy it manually.
+
+## How to build and run the code from Visual Studio 2022 under Windows
+
+Download and install Visual Studio 2022 Community Edition (or later) and the .Net SDK version 6.0 (or later).
+
+Load `MOSTACHI.sln` in Visual Studio.
+
+Edit /Commons/paths.xml to match your local directory.
+
+## How to build and run the code from the command line under Linux
 
 If you have installed the .NET SDK for Linux you can use the `dotnet` command to build code and publish the resulting executable (publishing is the .NET equivalent to the `make install` that Linux users are familiar with). The commands will be:
 
@@ -43,8 +54,6 @@ This will give you four executable programs in the `bin` directory:
 - `ScoreInfrastructurePlan`
 
 The `-c Release` option turns on optimization and parallel execution of the code. The programs can then be run from the `bin` directory. The `--use-current-runtime` option says that the program should be run by the same CLR ("C# virtual machine") used for the compile.
-
-There are no arguments to the programs. Instead, they assume that there is a file named `paths.xml` in the current directory that indicates where inputs can be read and where outputs should be written. Building the code also moves the `paths.xml` to the `bin` directory.
 
 # Preparing for running experiments
 
