@@ -172,8 +172,17 @@ All output from the experiments is in the form of .csv files stored in
 
 # Interpret output data to draw conclusions
 
-***TODO: Explain the output files***
+## Output files
+
+MOSTACHI generates several files based on each simulated scenario. These are output to the folder specified in `mostachi-source\Commons\paths.xml`, with subfolders corresponding to scenario names.
+- `[scenario name]/*.driving_raster.txt` - contains aggregated data for all routes in a 5x5 km raster, for each year and vehicle type,
+- `[scenario name]/*.infra_raster.txt`- contains information about the installed capacity and utilization of each charging infrastructure site, for each year,
+- `[scenario name]/*.routes.txt` - contains information about cost-minimizing choices made for each route, vehicle type and year,
+- `[scenario name]/*.stats.txt` - contains summary statistics for the scenario,
+- `run_log_YYYY-MM-DD_HH-MM.stats.txt` - contains all summary statistics appended in one file, if multiple scenarios are run as a batch.
 
 ***TODO: Provide examples how to interpret results in Python***
 
-***TODO: Provide examples how to visualize output in Excel 3D maps***
+## How to visualize output in Excel 3D maps
+
+An easy way to make sense of the driving and infrastructure rasters is to load these into separate worksheets in an Excel document. By selecting all data and inserting a "3D map", the data can be visualized as for instance bars, circles or heatmaps, to answer questions of geographic nature.
