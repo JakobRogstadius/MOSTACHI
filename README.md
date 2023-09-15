@@ -16,18 +16,18 @@ The simulation tool is a software program written in C# (.Net). It runs on all t
 
 The top level directory (also the root of the repository) contains the following subdirectories, some of which come from the repository and some which are created by the build process:
 
-- `ChargingInfrastructurePlanning` contains the source code of the simulator and is part of the repository.  
+- `mostachi-source` contains the source code of the simulator and is part of the repository.  
 - `data` contains two example data sets, `sweden` which is the dataset our results have been generated from, and`short` which is a small data set that can be used for testing and debugging. It is part of the repository.  
 - `README.md` is this file, part of the repository.
 - `bin` contains the generated programs and is created by the build system (not in the repository).  
 - `obj` is created by the build system (not in the repository)  
 - `out` is created by the build system (not in the repository)  
 
-If you want to store data in other locations, edit `/MOSTACHI/Commons/paths.xml` to match your local file system. By default, it points at the `short` dataset.
+If you want to store data in other locations, edit `/mostachi-source/Commons/paths.xml` to match your local file system. By default, it points at the `short` dataset.
 
 ## Configuration
 
-There are no command-line arguments to the programs. File paths are specified in `/MOSTACHI/Commons/paths.xml`.
+There are no command-line arguments to the programs. File paths are specified in `/mostachi-source/Commons/paths.xml`.
 
 Building the code should copy `paths.xml` to the output `bin` directory. If it does not, copy it manually.
 
@@ -43,7 +43,7 @@ Edit /Commons/paths.xml to match your local directory.
 
 If you have installed the .NET SDK for Linux you can use the `dotnet` command to build code and publish the resulting executable (publishing is the .NET equivalent to the `make install` that Linux users are familiar with). The commands will be:
 
-`cd ChargingInfrastructurePlanning`  
+`cd mostachi-source`  
 `dotnet publish --use-current-runtime -c Release -o ../bin`
 
 This will give you four executable programs in the `bin` directory:
