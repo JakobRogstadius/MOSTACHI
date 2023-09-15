@@ -1,0 +1,6 @@
+vehicletype_id	name	description
+101	LGV3	Light truck < 3.5t
+102	MGV16	Lorry medium 3.5-16t
+103	MGV24	Lorry medium 16-24t
+104	HGV40	Lorry heavy 24-40t
+105	HGV60	Lorry heavy 40-60t

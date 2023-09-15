@@ -1,0 +1,5 @@
+Snabba upp kod
+Alla väljer laddstrategin ERS
+Kör sampling och viktning av rutter istället för första N
+Förarkostnader är fortfarande rätt höga i förhållande till fordonskostnader (9:5). Det är troligtvis för att avskrivningstiderna sätts kortare än livstiden när man normalt räknar på transportekonomi.
+

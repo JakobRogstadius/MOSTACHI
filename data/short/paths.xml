@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<paths>
+	<!-- Windows-style \ or Unix-style / does not matter, but do include a slash at the end of the path. Relative paths work. -->
+	<data></data>
+	<temp>temp/</temp>
+	<logs>logs/</logs>
+	<osrm>http://localhost:5000</osrm>
+</paths>
