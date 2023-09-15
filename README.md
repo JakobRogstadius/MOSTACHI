@@ -10,6 +10,8 @@ To study other road networks than the Swedish or other vehicle groups than heavy
 
 The simulation tool is a software program written in C# (.Net). It runs on all the main operating systems, and comes bundled with project files that can be opened in [Visual Studio 2022](https://visualstudio.microsoft.com/vs/community/) or later (a popular programming IDE on Windows) and it does not need any special hardware. If you don't have access to Visual Studio, you can still compile and run the software from the command line, or through another IDE, as long as you have installed the [.Net SDK](https://dotnet.microsoft.com/en-us/download/). The code has been tested with .NET 6.0.
 
+The software has been tested under Windows 10 Enterprise and Ubuntu 20.04 LTS, with .NET 6.0.
+
 ## Top level directory structure
 
 The top level directory (also the root of the repository) contains the following subdirectories, some of which come from the repository and some which are created by the build process:
@@ -178,6 +180,8 @@ MOSTACHI generates several files based on each simulated scenario. These are out
 - `[scenario name]/*.routes.txt` - contains information about cost-minimizing choices made for each route, vehicle type and year,
 - `[scenario name]/*.stats.txt` - contains summary statistics for the scenario,
 - `run_log_YYYY-MM-DD_HH-MM.stats.txt` - contains all summary statistics appended in one file, if multiple scenarios are run as a batch.
+
+Example output files are provided in `/data/example output`.
 
 ***TODO: Provide examples how to interpret results in Python***
 
