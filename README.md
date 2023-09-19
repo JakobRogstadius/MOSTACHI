@@ -53,7 +53,7 @@ This will give you four executable programs in the `bin` directory:
 - `GenerateDatasets`
 - `ScoreInfrastructurePlan`
 
-The `-c Release` option turns on optimization and parallel execution of the code. The programs can then be run from the `bin` directory. The `--use-current-runtime` option says that the program should be run by the same CLR ("C# virtual machine") used for the compile.
+The `-c Release` option turns on optimization and parallel execution of the code. The programs can then be run from the `bin` directory. The `--use-current-runtime` option says that the program should be run by the same CLR ("C# virtual machine") used for the compile. Building the programs should take under a minute.
 
 # Preparing for running experiments
 
@@ -92,6 +92,7 @@ Note: Our data had the property that all `place_id`s divisible by 100 referred t
 | 104 | HGV40 | Lorry heavy 24-40t |
 | 105 | HGV60 | Lorry heavy 40-60t |
 
+
 ## Step 2: Calculate routes for all OD pairs
 
 The next step is to, for each OD pair, calculate one or several likely routes along the road network. The Swedish OD matrix that we have had access to is primarily at municipality resolution, with only a few key locations included, such as major ports and goods terminals. Our dataset also segments the world outside Sweden into regions larger than municipalities. This introduces a problem, as we require that the sum of all traffic on the road network is reasonably accurate, thus we cannot route all traffic to a municipality to the same point. 
@@ -123,6 +124,10 @@ where `"1234"` is a `region_id` and `place_id = (region_id - 700000) / 100`.
 
 Next, download an [OpenStreetMap](https://download.geofabrik.de/europe.html) dump covering your region of interest. Then [set up an OSRM server](https://hub.docker.com/r/osrm/osrm-backend/) and load it with your OpenStreetMap data. Using the pre-built docker image is very easy. Note that loading all of Europe into the routing engine may require around 60 GB of RAM.
 
+Both the datasets `short` and `sweden` should be routed against the `sweden-latest.osm.pbf` dump. Follow the Quickstart guide
+on the OSRM server web page (substituting the correct dump). Note the need to ensure sufficient rights to run the server, as
+detailed in the instructions.
+
 Verify that HTTP calls can be made to the routing server.
 
 ### Run CalculateRoutes
@@ -133,15 +138,21 @@ Compile and run the program `CalculateRoutes`. **This may take a few days to com
 
 This should generate the files `nodesequences.bin.part_#`, `nodes.bin` and `nodepairs.bin`. Any errors encountered during execution will be printed to `error.txt`.
 
+This should take a minute or so on the `short` dataset.
+
 ## Step 3: Run CompressNodeSequences
 
 The rather unmanageable output of the previous step contains, for each route, a long sequence of OpenStreetMap `way_id`s that describes the stepwise route along the road network from origin to destination. As OpenStreetMap represents the road network in higher resolution than we need, the data can be made more manageable by simplification of the road network.
 
 Compile and run the program `CompressNodeSequences`. This should generate the files `clusternodepairs.bin`, `nodepairclusters.bin`, `clustersequences.bin` and `bidirectionalnodes.csv` in the data directory specified in `paths.xml`. The space-consuming `nodesequences.bin.part_#` files are no longer needed and can be deleted, unless you wish to experiment with other compression schemes. **Modifying the `CompressNodeSequences` algorithm to simplify the road network further is likely one of the best ways to improve the computational performance of the simulation.**
 
+This should take a few seconds on the `short` dataset.
+
 ## Step 4: Pre-calculate several datasets, such as the build-out order for electric roads
 
 Compile and run the program `GenerateDatasets`. This should generate the files `acea_all_stop_location_matches.csv`, `route_length_class.csv`, `cluster_traffic_and_length.csv` and `ers_build_order.csv`.
+
+This should take a few seconds on the `short` dataset. Ignore the warnings for this dataset, they are unimportant.
 
 ## Step 5: Modify global parameter values to represent your region of interest
 
@@ -168,7 +179,8 @@ To conduct sensitivity analysis with regards to the global parameter values, see
 
 `ExperimentSetup.cs` defines which of the many defined experiments to compute. There is no graphical user interface yet (reach out if you wish to add one!) and for now, you will have to make do with commenting and uncommenting different experiments. Once you have ensured that the correct experiments will be computed, recompile and run the `ScoreInfrastructurePlan` program.
 
-All output from the experiments is in the form of .csv files stored in 
+
+This should take a few minutes or so on the `short` dataset with the experiments that are enabled by default.
 
 # Interpret output data to draw conclusions
 
