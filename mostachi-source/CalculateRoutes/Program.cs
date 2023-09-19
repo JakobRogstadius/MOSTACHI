@@ -213,13 +213,13 @@ namespace CalculateRoutes
                             nodePositions = match.Value[1..^1].Split("],[").Select(n => n.Split(",").Select(m => double.Parse(m, CultureInfo.InvariantCulture)).ToArray()).ToArray();
                             break;
                         case "nodes": //nodes
-                            nodeOsmIDs = match.Value.Split('\t').Select(n => long.Parse(n)).ToArray();
+                            nodeOsmIDs = match.Value.Split(',').Select(n => long.Parse(n)).ToArray();
                             break;
                         case "speed": //speed
-                            nodePairSpeed = match.Value.Split('\t').Select(n => float.Parse(n, CultureInfo.InvariantCulture)).ToArray();
+                            nodePairSpeed = match.Value.Split(',').Select(n => float.Parse(n, CultureInfo.InvariantCulture)).ToArray();
                             break;
                         case "tance": //distance
-                            nodePairDistance = match.Value.Split('\t').Select(n => float.Parse(n, CultureInfo.InvariantCulture)).ToArray();
+                            nodePairDistance = match.Value.Split(',').Select(n => float.Parse(n, CultureInfo.InvariantCulture)).ToArray();
                             break;
                         default:
                             break;
@@ -282,13 +282,13 @@ namespace CalculateRoutes
                             nodePositions = match.Value.Substring(1, match.Value.Length - 2).Split("],[").Select(n => n.Split(",").Select(m => double.Parse(m, CultureInfo.InvariantCulture)).ToArray()).ToArray();
                             break;
                         case "nodes": //nodes
-                            nodeOsmIDs = match.Value.Split('\t').Select(n => long.Parse(n)).ToArray();
+                            nodeOsmIDs = match.Value.Split(',').Select(n => long.Parse(n)).ToArray();
                             break;
                         case "speed": //speed
-                            nodePairSpeed = match.Value.Split('\t').Select(n => float.Parse(n, CultureInfo.InvariantCulture)).ToArray();
+                            nodePairSpeed = match.Value.Split(',').Select(n => float.Parse(n, CultureInfo.InvariantCulture)).ToArray();
                             break;
                         case "tance": //distance
-                            nodePairDistance = match.Value.Split('\t').Select(n => float.Parse(n, CultureInfo.InvariantCulture)).ToArray();
+                            nodePairDistance = match.Value.Split(',').Select(n => float.Parse(n, CultureInfo.InvariantCulture)).ToArray();
                             break;
                         default:
                             break;
