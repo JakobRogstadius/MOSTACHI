@@ -87,11 +87,11 @@ namespace GenerateDatasets
             var ersSeedSegments = clusters.Where(n => n.Value.mid_lat > 55.937114 && n.Value.mid_lat < 55.952384 && n.Value.mid_lon > 12.803299 && n.Value.mid_lon < 12.820696).Select(n => (int)n.Key).ToList();
             CalculateErsRolloutOrder(clusters, ersSeedSegments);
 
-            //GenerateAnnualMovementsAndLengthPerClusterCSV(routeClassWeights, clusters);
+            GenerateAnnualMovementsAndLengthPerClusterCSV(routeClassWeights, clusters);
 
-            //MatchAceaChargePointsWithClusters(nodes, clusters);
+            MatchAceaChargePointsWithClusters(nodes, clusters);
 
-            //CalculateClusterToGridMapping();
+            CalculateClusterToGridMapping();
         }
 
         private static void GenerateAnnualMovementsAndLengthPerClusterCSV(Dictionary<int, float> routeClassWeight,
