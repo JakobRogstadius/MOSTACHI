@@ -122,13 +122,11 @@ where `"1234"` is a `region_id` and `place_id = (region_id - 700000) / 100`.
 
 ### Install a routing server
 
-Next, download an [OpenStreetMap](https://download.geofabrik.de/europe.html) dump covering your region of interest. Then [set up an OSRM server](https://hub.docker.com/r/osrm/osrm-backend/) and load it with your OpenStreetMap data. Using the pre-built docker image is very easy. Note that loading all of Europe into the routing engine may require around 60 GB of RAM.
+Next, download an OpenStreetMap dump covering your region of interest ([Europe](https://download.geofabrik.de/europe.html), [Sweden](https://download.geofabrik.de/europe.html)). Then [set up an OSRM server](https://hub.docker.com/r/osrm/osrm-backend/) and load it with your OpenStreetMap data. Using the pre-built docker image is very easy. Note that loading all of Europe into the routing engine may require around 60 GB of RAM.
 
-Both the datasets `short` and `sweden` should be routed against the `sweden-latest.osm.pbf` dump. Follow the Quickstart guide
-on the OSRM server web page (substituting the correct dump). Note the need to ensure sufficient rights to run the server, as
-detailed in the instructions.
+The enclosed `sweden` dataset should be routed against the full European road network, as the current implementation will underestimate the length of routes that go outside of the map extent. Contact the author if you are short on RAM and want to resolve this limitation. The `short` test dataset can be routed against `sweden-latest`.
 
-Verify that HTTP calls can be made to the routing server.
+Follow the Quickstart guide on the OSRM server web page (substituting the correct dump). Note the need to ensure sufficient rights to run the server, as detailed in the instructions. Verify that HTTP calls can be made to the routing server, as per the instructions.
 
 ### Run CalculateRoutes
 
