@@ -2,7 +2,9 @@
 
 This repository contains source code and input data for MOSTACHI - Model for Optimization and Simulation of Traffic And CHarging Infrastructure. MOSTACHI is a free and open-source agent-based simulation tool designed to study interaction effects in time and space between logistics patterns, competing charging infrastructure and cost-minimizing vehicle operators.
 
-Datasets to run simulations of heavy truck traffic on the Swedish road network are currently available in the repository. If you wish to perform studies with the bundled input data, jump ahead and [start running experiments](#run-experiments). 
+Datasets to run simulations of heavy truck traffic on the Swedish road network are currently available in the repository. If you wish to perform studies with the bundled input data, jump ahead and [start running experiments](#run-experiments).
+
+Data in similar format covering [all of Europe at NUTS3 resolution](https://data.mendeley.com/datasets/py2zkrb65h/1) exists. Reach out if you need support in adapting the codebase to work with that or other data.
 
 To study other road networks than the Swedish or other vehicle groups than heavy trucks, new traffic pattern data is required. Follow the steps below to set up the tool for your transport system of interest.
 
