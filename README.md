@@ -63,7 +63,9 @@ The `-c Release` option turns on optimization and parallel execution of the code
 
 The simulation tool was originally developed to analyze traffic on the Swedish road network. As input, we have used an origin-destination (OD) matrix output by the Samgods simulation tool, for the 2016 base scenario. This dataset consists of four files (of which only the first three are ever read by the program). For reference, the simulation tool was developed using a dataset of approximately 200,000 routes between approximately 1,000 places, with estimated traffic intensity for each of four truck classes for each route.
 
-Later on, running the simulation can take minutes to days, depending on geographic area and experimental setup. By also preparing truncated versions of `routes.csv` and `routevehicletype.csv` describing smaller OD matrices, you will have a small dataset for testing to facilitate rapid iteration during development. The directory `data/small` gives one such very small dataset that can be used to verify that the installation of code and tools was successful.
+Similar transport flow data between [all European NUTS3 regions](https://data.mendeley.com/datasets/py2zkrb65h/1) exists. Get in touch if you want to collaborate on analyzing new datasets.
+
+Running the simulation on national or international-scale datasets can take minutes to days, depending on experimental setup. By also preparing truncated versions of `routes.csv` and `routevehicletype.csv` describing smaller OD matrices, you will have a small dataset for testing to facilitate rapid iteration during development. The directory `data/small` gives one such very small dataset that can be used to verify that the installation of code and tools was successful.
 
 `places.csv`:
 
