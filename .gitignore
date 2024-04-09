@@ -34,3 +34,5 @@ msbuild.log
 msbuild.err
 msbuild.wrn
 *obsolete*
+/data/model_parameters_initial_submission.xlsx
+/mostachi-source/Commons/paths.xml
