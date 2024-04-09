@@ -59,7 +59,7 @@ namespace ScoreInfrastructurePlan
             { 
                 { RouteSegmentType.Depot, Parameters.Infrastructure.Depot_write_off_period_years[year] },
                 { RouteSegmentType.Destination, Parameters.Infrastructure.Destination_write_off_period_years[year] },
-                { RouteSegmentType.RestStop, Parameters.Infrastructure.Station_write_off_period_years[year] },
+                { RouteSegmentType.RestStop, Parameters.Infrastructure.Rest_Stop_write_off_period_years[year] },
                 { RouteSegmentType.Road, Parameters.Infrastructure.ERS_write_off_period_years[year] }
             };
         }

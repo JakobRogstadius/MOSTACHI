@@ -131,8 +131,8 @@ namespace ScoreInfrastructurePlan
                     break;
                 case RouteSegmentType.RestStop:
                     stop_h = HGV40.Common_Rest_stop_h[year];
-                    util_ratio = Infrastructure.Station_utilization_ratio[year];
-                    veh_per_day = vehiclesPerDay ?? Infrastructure.Station_reference_vehicles_per_day[year];
+                    util_ratio = Infrastructure.Rest_Stop_utilization_ratio[year];
+                    veh_per_day = vehiclesPerDay ?? Infrastructure.Rest_Stop_reference_vehicles_per_day[year];
                     break;
                 default:
                     throw new NotImplementedException();
@@ -185,13 +185,13 @@ namespace ScoreInfrastructurePlan
                     profitMargin_ratio = inf.Destination_profit_margin_ratio[year];
                     break;
                 case RouteSegmentType.RestStop:
-                    util_ratio = inf.Station_utilization_ratio[year];
-                    hw_euroPerKW = inf.Station_hardware_cost_euro_per_kW[year];
-                    maint_ratio_per_year = inf.Station_hardware_maintenance_ratio_per_year[year];
-                    gridCable_euro = inf.Station_grid_connection_cable_euro[year];
-                    writeOff_years = inf.Station_write_off_period_years[year];
+                    util_ratio = inf.Rest_Stop_utilization_ratio[year];
+                    hw_euroPerKW = inf.Rest_Stop_hardware_cost_euro_per_kW[year];
+                    maint_ratio_per_year = inf.Rest_Stop_hardware_maintenance_ratio_per_year[year];
+                    gridCable_euro = inf.Rest_Stop_grid_connection_cable_euro[year];
+                    writeOff_years = inf.Rest_Stop_write_off_period_years[year];
                     interest_ratioPerYear = World.Economy_Private_sector_interest_public_charging_and_trucks_percent[year];
-                    profitMargin_ratio = inf.Station_profit_margin_ratio[year];
+                    profitMargin_ratio = inf.Rest_Stop_profit_margin_ratio[year];
                     break;
                 default:
                     throw new NotImplementedException();

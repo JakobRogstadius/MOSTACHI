@@ -18,7 +18,7 @@ namespace ScoreInfrastructurePlan
         /// </summary>
         public Dimensionless ErsCoverageRatio { get; set; }
         public KilometersPerHour ErsReferenceSpeed_kmph { get; set; }
-        public Kilometers FinalErsLength_km { get; set; }
+        public Kilometers FinalErsNetworkScope_km { get; set; }
 
         public override string ToString()
         {
@@ -30,7 +30,7 @@ namespace ScoreInfrastructurePlan
             }
             sb.AppendLine("ErsCoverageRatio: " + ErsCoverageRatio);
             sb.AppendLine("ErsReferenceSpeed_kmph: " + ErsReferenceSpeed_kmph);
-            sb.AppendLine("FinalErsLength_km: " + FinalErsLength_km);
+            sb.AppendLine("FinalErsLength_km: " + FinalErsNetworkScope_km);
             return sb.ToString();
         }
 
@@ -41,7 +41,7 @@ namespace ScoreInfrastructurePlan
         public OtherUnit GetExpectedErsAadt()
         {
             //This equation is valid for heavy vehicles in Sweden
-            return new OtherUnit(FinalErsLength_km < 1000 ? 4000 : (float)(15000 - Math.Log(Math.Log(FinalErsLength_km.Val - 500)) * 6200));
+            return new OtherUnit(FinalErsNetworkScope_km < 1000 ? 4000 : (float)(15000 - Math.Log(Math.Log(FinalErsNetworkScope_km.Val - 500)) * 6200));
         }
     }
 

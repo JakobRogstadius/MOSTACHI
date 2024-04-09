@@ -110,7 +110,7 @@ namespace ScoreInfrastructurePlan
             {
                 { RouteSegmentType.Depot, 1 / Parameters.Infrastructure.Depot_utilization_ratio[year] },
                 { RouteSegmentType.Destination, 1 / Parameters.Infrastructure.Destination_utilization_ratio[year] },
-                { RouteSegmentType.RestStop, 1 / Parameters.Infrastructure.Station_utilization_ratio[year] },
+                { RouteSegmentType.RestStop, 1 / Parameters.Infrastructure.Rest_Stop_utilization_ratio[year] },
                 { RouteSegmentType.Road, 1 / Parameters.Infrastructure.ERS_utilization_ratio[year] }
             };
 
@@ -343,6 +343,7 @@ namespace ScoreInfrastructurePlan
                     traversalCost.infraUse_perTraversal.Any(n => n.Key.Type == RouteSegmentType.Road); //remove the pickup if there was no opportunity to use it
 
                 //Calculate how long it takes for the battery to reach the reference EoL
+                //TODO: I think there should be some special handling here of days without driving
                 var annualCalendarAgeing = new OtherUnit(365 * 24 * tcost.BatteryAgeing_Calendar_RatioOfReferenceLifetime.Val / tcost.Traversal_h_Total.Val);
                 var annualCycleAgeing = new OtherUnit(vt.Common_Annual_distance_km[year].Val * tcost.BatteryAgeing_Cycling_RatioOfLifetime.Val / route_length_km.Val);
                 var yearsToRefEolThreshold = new Years(1 / (annualCalendarAgeing.Val + annualCycleAgeing.Val));
@@ -366,13 +367,14 @@ namespace ScoreInfrastructurePlan
                 var lifetimeInVehicle_years = UnitMath.Min(vehicleLifetime_years, maxUsableLifetimeInVehicle_years);
                 var lossAtEoLInVehicle_ratioOfNet = new Dimensionless(lifetimeInVehicle_years.Val * annualLoss_ratioOfNet.Val);
 
-                var lossPerTrip_ratioOfNet = new OtherUnit(annualLoss_ratioOfNet.Val / tripsPerYear.Val);
+                //var lossPerTrip_ratioOfNet = new OtherUnit(annualLoss_ratioOfNet.Val / tripsPerYear.Val);
 
                 //Calculate the residual value at EoL in the vehicle
                 Dimensionless residualValue_ratio = GetResidualBatteryValue_RatioOfNetPurchasePrice(year, lifetimeInVehicle_years, 1-lossAtEoLInVehicle_ratioOfNet);
 
                 Kilometers batteryLifetimeInVehicle_km = vt.Common_Annual_distance_km[year] * lifetimeInVehicle_years;
 
+                //TODO: This line effectively assumes that all future battery replacements have the same cost as the initial battery. In reality, replacement batteries may cost less.
                 EuroPerKilometer batteryAgeing_euroPerKm =  Parameters.Battery.Net_Pack_cost_euro_per_kWh[year] * netBatteryCapacity_kWh * (1 - residualValue_ratio) / batteryLifetimeInVehicle_km;
 
                 //The goal is to calculate the ratio at which we need to replentish vehicle batteries, so the consumption rate of virgin batteries. The entire battery pack is spent as a vehicle battery at the EoL in the truck.
@@ -386,7 +388,7 @@ namespace ScoreInfrastructurePlan
                 Dimensionless emissionsAllocatedToThisTruck_ratio = new Dimensionless(Math.Min(1, lossWhenUnusableByVehicle_ratioOfNet.Val / batteryScrapSoH));
                 KilogramPerKilometer co2_battery_kgPerKm = (Parameters.Battery.Net_Production_emissions_kg_CO2_per_kWh[year] * netBatteryCapacity_kWh * emissionsAllocatedToThisTruck_ratio) / batteryLifetimeInVehicle_km;
                 EuroPerKilometer co2_euroPerKm_total = (tcost.CO2_kg / route_length_km + co2_battery_kgPerKm) * Parameters.World.CO2_SCC_euro_per_kg[year];
-                EuroPerKilometer co2_euroPerKm_internalized = (tcost.CO2_kg / route_length_km) * Parameters.World.CO2_SCC_euro_per_kg[year] * Parameters.World.CO2_Tax_ratio_of_SCC[year];
+                EuroPerKilometer co2_euroPerKm_internalized = co2_euroPerKm_total * Parameters.World.CO2_Tax_ratio_of_SCC[year];
                 
                 //distance ageing of vehicle and pick-up
                 EuroPerKilometer vehicle_euroPerKm = vt.BEV_ChassisAndMaintenance_cost_euro_per_km(year);
@@ -395,7 +397,8 @@ namespace ScoreInfrastructurePlan
                 {
                     Euro pickupBase_euro = Parameters.Infrastructure.ERS_pick_up_cost_base_heavy_euro[year];
                     KiloWatts ers_kWMax = scenario.InfraOffers.AvailablePowerPerUser_kW[RouteSegmentType.Road];
-                    KiloWatts vehicle_kWMax = vt.GetPowerConsumption_kW(year, new KilometersPerHour(90)) + netBatteryCapacity_kWh * Parameters.Battery.Net_Max_permitted_charging_rate_c[year];
+                    KiloWatts vehicle_kW_prop = vt.GetPowerConsumption_kW(year, new KilometersPerHour(90), netBatteryCapacity_kWh, hasPickup);
+                    KiloWatts vehicle_kWMax = vehicle_kW_prop + netBatteryCapacity_kWh * Parameters.Battery.Net_Max_permitted_charging_rate_c[year];
                     Euro pickupPower_euro = Parameters.Infrastructure.ERS_pick_up_cost_euro_per_kW[year] * UnitMath.Min(ers_kWMax, vehicle_kWMax);
                     Kilometers pickupLifespan_km = single_vehicle_km_per_year * Parameters.Infrastructure.ERS_pick_up_lifespan_years[year];
                     ersPickup_euroPerKm = (pickupBase_euro + pickupPower_euro) / pickupLifespan_km;
@@ -619,15 +622,6 @@ namespace ScoreInfrastructurePlan
             //return (1 - valueLossAtReferenceEoLSoH_ratio * spentUsefulLife_ratio) * newPriceAtEol_ratio;
         }
 
-        public static float GetPowerConsumption_kW(
-            float speed_kmph,
-            float propulsion_kWAt90Kmph,
-            float auxiliary_kW)
-        {
-            //TODO: Improve energy consumption curve
-            return propulsion_kWAt90Kmph * speed_kmph / 90 + auxiliary_kW;
-        }
-
         public static (Hours dwellTime_h, Hours chargingTime_h, Hours ofWhichIsDelay_h, KiloWatts discharging_kW, KiloWatts charging_kW, KiloWattHours discharging_kWh, KiloWattHours charging_kWh, CRate netDischargingCRate, CRate netChargingCRate, KiloWatts totalPowerDraw_kW, KiloWattHours energyPurchased_kWh, Euro infraFees_euro)
             GetEnergyFlows(
             KiloWattHours netBatterySoc_Kwh,
@@ -642,7 +636,7 @@ namespace ScoreInfrastructurePlan
         {
             //What user fees do we need to pay? Not treated as a system cost, but an approximate value is needed to compare charging strategies.
 
-            KiloWatts powerConsumption_kW = vehicleType.GetPowerConsumption_kW(year, segment.Speed_Kmph); //Assumes speed is ~0 if this segment represents a stop
+            KiloWatts powerConsumption_kW = vehicleType.GetPowerConsumption_kW(year, segment.Speed_Kmph, netBatteryCapacity_kWh, chargingStrat.HasErsPickup()); //Assumes speed is ~0 if this segment represents a stop
             (Hours minDwellTime_h, bool waitToCharge) = chargingStrat.DwellTime_h(year, segment, vehicleType, routeLength_h, segmentIsPlannedStop);
 
             //Do we want to charge here?

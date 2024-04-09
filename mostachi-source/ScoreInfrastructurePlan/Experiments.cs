@@ -14,10 +14,20 @@ namespace ScoreInfrastructurePlan
         private static BatteryOffers GetDefaultBatteryOffers()
         {
             return new BatteryOffers {
-                    { Parameters.MGV16, new float[] { 75, 150, 250, 450 }.Select(n => new KiloWattHours(n)).ToArray() },
-                    { Parameters.MGV24, new float[] { 150, 250, 450, 700 }.Select(n => new KiloWattHours(n)).ToArray() },
-                    { Parameters.HGV40, new float[] { 150, 250, 450, 700, 1000 }.Select(n => new KiloWattHours(n)).ToArray() },
-                    { Parameters.HGV60, new float[] { 250, 450, 700, 1000 }.Select(n => new KiloWattHours(n)).ToArray() }
+                    { Parameters.MGV16, new float[] { 75, 150, 250, 450, 700 }.Select(n => new KiloWattHours(n)).ToArray() },
+                    { Parameters.MGV24, new float[] { 150, 250, 450, 700, 1000 }.Select(n => new KiloWattHours(n)).ToArray() },
+                    { Parameters.HGV40, new float[] { 150, 250, 450, 700, 1000, 1500 }.Select(n => new KiloWattHours(n)).ToArray() },
+                    { Parameters.HGV60, new float[] { 250, 450, 700, 1000, 1500 }.Select(n => new KiloWattHours(n)).ToArray() }
+            };
+        }
+
+        private static BatteryOffers GetLargeBatteryOffers()
+        {
+            return new BatteryOffers {
+                    { Parameters.MGV16, new float[] { 75, 150, 250, 450, 700 }.Select(n => new KiloWattHours(n)).ToArray() },
+                    { Parameters.MGV24, new float[] { 150, 250, 450, 700, 1000 }.Select(n => new KiloWattHours(n)).ToArray() },
+                    { Parameters.HGV40, new float[] { 150, 250, 450, 700, 1000, 1500 }.Select(n => new KiloWattHours(n)).ToArray() },
+                    { Parameters.HGV60, new float[] { 250, 450, 700, 1000, 1500 }.Select(n => new KiloWattHours(n)).ToArray() }
             };
         }
 
@@ -25,10 +35,10 @@ namespace ScoreInfrastructurePlan
         {
             return new Dictionary<RouteSegmentType, KiloWatts>()
             {
-                { RouteSegmentType.Depot, new KiloWatts(100) },
+                { RouteSegmentType.Depot, new KiloWatts(150) },
                 { RouteSegmentType.Destination, new KiloWatts(500) },
-                { RouteSegmentType.RestStop, new KiloWatts(750) },
-                { RouteSegmentType.Road, new KiloWatts(500) }
+                { RouteSegmentType.RestStop, new KiloWatts(1500) },
+                { RouteSegmentType.Road, new KiloWatts(375) }
             };
         }
 
@@ -78,7 +88,7 @@ namespace ScoreInfrastructurePlan
                     AvailablePowerPerUser_kW = GetDefaultInfrastructurePower(),
                     ErsReferenceSpeed_kmph = new KilometersPerHour(85),
                     ErsCoverageRatio = new Dimensionless(1f),
-                    FinalErsLength_km = new Kilometers(2000)
+                    FinalErsNetworkScope_km = new Kilometers(2000)
                 },
                 ChargingStrategies = GetDefaultChargingStrategies()
             };
@@ -87,7 +97,7 @@ namespace ScoreInfrastructurePlan
         }
 
         public static Scenario Custom(Dimensionless sampleRatio, string scenarioName, (ModelYear start, ModelYear end) simulationPeriod, (Kilometers km, KiloWatts kW, Dimensionless density) ersConfig,
-            BuildPeriod depot, BuildPeriod destination, (ModelYear from, ModelYear to) ers, BuildPeriod station, bool forcedErsUse = false)
+            BuildPeriod depot, BuildPeriod destination, (ModelYear from, ModelYear to) ers, BuildPeriod station, bool forcedErsUse = false, KiloWatts restStopkW = null)
         {
             var s = new Scenario()
             {
@@ -105,11 +115,13 @@ namespace ScoreInfrastructurePlan
                     AvailablePowerPerUser_kW = GetDefaultInfrastructurePower(),
                     ErsReferenceSpeed_kmph = new KilometersPerHour(85),
                     ErsCoverageRatio = ersConfig.density,
-                    FinalErsLength_km = ersConfig.km
+                    FinalErsNetworkScope_km = ersConfig.km
                 },
                 ChargingStrategies = GetDefaultChargingStrategies(forcedErsUse: forcedErsUse)
             };
             s.InfraOffers.AvailablePowerPerUser_kW[RouteSegmentType.Road] = ersConfig.kW;
+            if (!object.ReferenceEquals(null, restStopkW))
+                s.InfraOffers.AvailablePowerPerUser_kW[RouteSegmentType.RestStop] = restStopkW;
             return s;
         }
 
@@ -144,33 +156,11 @@ namespace ScoreInfrastructurePlan
                     },
                     ErsReferenceSpeed_kmph = new KilometersPerHour(85),
                     ErsCoverageRatio = new Dimensionless(1),
-                    FinalErsLength_km = new Kilometers(0)
+                    FinalErsNetworkScope_km = new Kilometers(0)
                 },
                 ChargingStrategies = new List<ChargingStrategy>() {
                     ChargingStrategy.NA_Diesel
                 },
-                InheritInfraPower = false
-            });
-
-            scenarios.Add(new Scenario()
-            {
-                Name = "Q1_AllInfraExceptErs",
-                MovementSampleRatio = sampleRatio,
-                SimStartYear = ModelYear.Y2020,
-                SimEndYear = ModelYear.Y2050,
-                DepotBuildYear = (ModelYear.Y2020, ModelYear.Y2020),
-                DestinationBuildYear = (ModelYear.Y2020, ModelYear.Y2020),
-                ErsBuildYear = (ModelYear.N_A, ModelYear.N_A),
-                StationBuildYear = (ModelYear.Y2020, ModelYear.Y2020),
-                BatteryOffers = GetDefaultBatteryOffers(),
-                InfraOffers = new InfraOffers()
-                {
-                    AvailablePowerPerUser_kW = GetDefaultInfrastructurePower(),
-                    ErsReferenceSpeed_kmph = new KilometersPerHour(85),
-                    ErsCoverageRatio = new Dimensionless(0.4f),
-                    FinalErsLength_km = new Kilometers(6000)
-                },
-                ChargingStrategies = GetDefaultChargingStrategies(),
                 InheritInfraPower = false
             });
 
@@ -184,16 +174,66 @@ namespace ScoreInfrastructurePlan
                 DestinationBuildYear = (ModelYear.N_A, ModelYear.N_A),
                 ErsBuildYear = (ModelYear.N_A, ModelYear.N_A),
                 StationBuildYear = (ModelYear.N_A, ModelYear.N_A),
-                BatteryOffers = GetDefaultBatteryOffers(),
+                BatteryOffers = GetLargeBatteryOffers(),
                 InfraOffers = new InfraOffers()
                 {
                     AvailablePowerPerUser_kW = GetDefaultInfrastructurePower(),
                     ErsReferenceSpeed_kmph = new KilometersPerHour(85),
                     ErsCoverageRatio = new Dimensionless(0.4f),
-                    FinalErsLength_km = new Kilometers(6000)
+                    FinalErsNetworkScope_km = new Kilometers(6000)
                 },
                 ChargingStrategies = GetDefaultChargingStrategies(),
-                InheritInfraPower = false
+                InheritInfraPower = false,
+                Before = delegate () { Parameters.World.Diesel_Price_euro_per_liter.SetToMultipleOfDefault(100); },
+                After = delegate () { Parameters.World.Diesel_Price_euro_per_liter.ResetToDefault(); }
+            });
+
+            scenarios.Add(new Scenario()
+            {
+                Name = "Q1_AllDepotAndRestStops",
+                MovementSampleRatio = sampleRatio,
+                SimStartYear = ModelYear.Y2020,
+                SimEndYear = ModelYear.Y2050,
+                DepotBuildYear = (ModelYear.Y2020, ModelYear.Y2020),
+                DestinationBuildYear = (ModelYear.N_A, ModelYear.N_A),
+                ErsBuildYear = (ModelYear.N_A, ModelYear.N_A),
+                StationBuildYear = (ModelYear.Y2020, ModelYear.Y2020),
+                BatteryOffers = GetLargeBatteryOffers(),
+                InfraOffers = new InfraOffers()
+                {
+                    AvailablePowerPerUser_kW = GetDefaultInfrastructurePower(),
+                    ErsReferenceSpeed_kmph = new KilometersPerHour(85),
+                    ErsCoverageRatio = new Dimensionless(0.4f),
+                    FinalErsNetworkScope_km = new Kilometers(6000)
+                },
+                ChargingStrategies = GetDefaultChargingStrategies(),
+                InheritInfraPower = false,
+                Before = delegate () { Parameters.World.Diesel_Price_euro_per_liter.SetToMultipleOfDefault(100); },
+                After = delegate () { Parameters.World.Diesel_Price_euro_per_liter.ResetToDefault(); }
+            });
+
+            scenarios.Add(new Scenario()
+            {
+                Name = "Q1_AllInfraExceptErs",
+                MovementSampleRatio = sampleRatio,
+                SimStartYear = ModelYear.Y2020,
+                SimEndYear = ModelYear.Y2050,
+                DepotBuildYear = (ModelYear.Y2020, ModelYear.Y2020),
+                DestinationBuildYear = (ModelYear.Y2020, ModelYear.Y2020),
+                ErsBuildYear = (ModelYear.N_A, ModelYear.N_A),
+                StationBuildYear = (ModelYear.Y2020, ModelYear.Y2020),
+                BatteryOffers = GetLargeBatteryOffers(),
+                InfraOffers = new InfraOffers()
+                {
+                    AvailablePowerPerUser_kW = GetDefaultInfrastructurePower(),
+                    ErsReferenceSpeed_kmph = new KilometersPerHour(85),
+                    ErsCoverageRatio = new Dimensionless(0.4f),
+                    FinalErsNetworkScope_km = new Kilometers(6000)
+                },
+                ChargingStrategies = GetDefaultChargingStrategies(),
+                InheritInfraPower = false,
+                Before = delegate () { Parameters.World.Diesel_Price_euro_per_liter.SetToMultipleOfDefault(100); },
+                After = delegate () { Parameters.World.Diesel_Price_euro_per_liter.ResetToDefault(); }
             });
 
             scenarios.Add(new Scenario()
@@ -206,16 +246,18 @@ namespace ScoreInfrastructurePlan
                 DestinationBuildYear = (ModelYear.Y2020, ModelYear.Y2020),
                 ErsBuildYear = (ModelYear.Y2020, ModelYear.Y2020),
                 StationBuildYear = (ModelYear.Y2020, ModelYear.Y2020),
-                BatteryOffers = GetDefaultBatteryOffers(),
+                BatteryOffers = GetLargeBatteryOffers(),
                 InfraOffers = new InfraOffers()
                 {
                     AvailablePowerPerUser_kW = GetDefaultInfrastructurePower(),
                     ErsReferenceSpeed_kmph = new KilometersPerHour(85),
                     ErsCoverageRatio = new Dimensionless(0.4f),
-                    FinalErsLength_km = new Kilometers(6000)
+                    FinalErsNetworkScope_km = new Kilometers(6000)
                 },
                 ChargingStrategies = GetDefaultChargingStrategies(forcedErsUse: true),
-                InheritInfraPower = false
+                InheritInfraPower = false,
+                Before = delegate () { Parameters.World.Diesel_Price_euro_per_liter.SetToMultipleOfDefault(100); },
+                After = delegate () { Parameters.World.Diesel_Price_euro_per_liter.ResetToDefault(); }
             });
 
             return scenarios;
@@ -243,7 +285,7 @@ namespace ScoreInfrastructurePlan
                     AvailablePowerPerUser_kW = powerPerUser,
                     ErsReferenceSpeed_kmph = new KilometersPerHour(85),
                     ErsCoverageRatio = ersCoverage_ratio,
-                    FinalErsLength_km = ers_km
+                    FinalErsNetworkScope_km = ers_km
                 },
                 ChargingStrategies = GetDefaultChargingStrategies()
             };
@@ -297,7 +339,7 @@ namespace ScoreInfrastructurePlan
                     AvailablePowerPerUser_kW = GetDefaultInfrastructurePower(),
                     ErsReferenceSpeed_kmph = new KilometersPerHour(85),
                     ErsCoverageRatio = new Dimensionless(0.25f),
-                    FinalErsLength_km = ers_kmFinal
+                    FinalErsNetworkScope_km = ers_kmFinal
                 },
                 ChargingStrategies = GetDefaultChargingStrategies()
             };
@@ -323,7 +365,7 @@ namespace ScoreInfrastructurePlan
                     AvailablePowerPerUser_kW = GetDefaultInfrastructurePower(),
                     ErsReferenceSpeed_kmph = new KilometersPerHour(85),
                     ErsCoverageRatio = new Dimensionless(0.25f),
-                    FinalErsLength_km = new Kilometers(2000)
+                    FinalErsNetworkScope_km = new Kilometers(2000)
                 },
                 ChargingStrategies = GetDefaultChargingStrategies()
             };
@@ -403,14 +445,23 @@ namespace ScoreInfrastructurePlan
 
         public static List<Scenario> GetScenarioMatrix(Dimensionless sampleRate, bool forcedErsUse = false)
         {
-            var simYear = (ModelYear.Y2035, ModelYear.Y2035);
+            //var simYear = (ModelYear.Y2035, ModelYear.Y2035);
+            //var ers_max_km = new Kilometers(8000f);
+
+            //var p0 = ((ModelYear.Y2050, ModelYear.Y2050), "00");
+            //var p25 = ((ModelYear.Y2035, ModelYear.Y2050), "25");
+            //var p75 = ((ModelYear.Y2020, ModelYear.Y2040), "75");
+
+            var simYear = (ModelYear.Y2035, ModelYear.Y2025);
             var ers_max_km = new Kilometers(8000f);
 
-            var p0 = ((ModelYear.Y2050, ModelYear.Y2050), "00");
-            var p25 = ((ModelYear.Y2035, ModelYear.Y2050), "25");
-            var p75 = ((ModelYear.Y2020, ModelYear.Y2040), "75");
-            var ratios = new ((ModelYear, ModelYear) y, string name)[] { p0, p25, p75 };
+            var p0 = ((ModelYear.Y2050, ModelYear.Y2050, new Dimensionless(0)), "00");
+            var p25 = ((ModelYear.Y2020, ModelYear.Y2020, new Dimensionless(0.25f)), "25");
+            var p75 = ((ModelYear.Y2020, ModelYear.Y2020, new Dimensionless(0.75f)), "75");
+            
+            var ratios = new ((ModelYear, ModelYear, Dimensionless) y, string name)[] { p0, p25, p75 };
 
+            var restStop_kW = new KiloWatts(1000);
             var ers_kW = new UnitList<KiloWatts>() { 100, 300, 700 };
             var ers_cover = new UnitList<Dimensionless>() { 0.25f, 0.5f, 1.0f };
 
@@ -421,6 +472,7 @@ namespace ScoreInfrastructurePlan
                 {
                     foreach (var ersRatio in ratios)
                     {
+                        var ers_km = ers_max_km * ersRatio.y.Item3;
                         foreach (var statRatio in ratios)
                         {
                             foreach (var kW in ers_kW)
@@ -428,7 +480,7 @@ namespace ScoreInfrastructurePlan
                                 foreach (var cover in ers_cover)
                                 {
                                     string name = "matrix_" + depRatio.name + "_" + destRatio.name + "_" + ersRatio.name + "_" + statRatio.name + "_" + kW + "_" + cover;
-                                    scenarios.Add(Experiments.Custom(sampleRate, name, simYear, (ers_max_km, kW, cover), depRatio.y, destRatio.y, ersRatio.y, statRatio.y, forcedErsUse));
+                                    scenarios.Add(Experiments.Custom(sampleRate, name, simYear, (ers_km, kW, cover), depRatio.y, destRatio.y, (ersRatio.y.Item1, ersRatio.y.Item2), statRatio.y, forcedErsUse, restStop_kW));
 
                                     if (ersRatio == p0)
                                         break;
@@ -456,16 +508,18 @@ namespace ScoreInfrastructurePlan
             finalErsLength ??= new(2000);
             ersCoverageRatio ??= new(0.4f);
 
-            KiloWatts ersPowerPerUser = new(150 / ersCoverageRatio.Val);
+            KiloWatts distanceAveragedErsPowerPerUser = new KiloWatts(150); //This value was identified in the 2022 technical report.
+            KiloWatts ersPowerPerUser = distanceAveragedErsPowerPerUser / ersCoverageRatio;
             ModelYear ersEndYear = (ModelYear)((int)ersStartYear + (int)Math.Max(0, Math.Ceiling(ersCoverageRatio.Val * finalErsLength.Val / 1500) - 1));
-
+            //25 30 35 40 45
+            //20 40 60 80 100
             var s = new Scenario()
             {
                 Name = "Q8_ExpectedScenario_" + suffix + "_" + finalErsLength.Val,
                 MovementSampleRatio = sampleRatio,
                 SimStartYear = ModelYear.Y2020,
                 SimEndYear = ModelYear.Y2050,
-                DepotBuildYear = depotBuildPeriod ?? (ModelYear.Y2025, ModelYear.Y2045, new(.9f)), //if null, use default value
+                DepotBuildYear = depotBuildPeriod ?? (ModelYear.Y2025, ModelYear.Y2050, new(.95f)), //17%, 33%, 50%, 66%, 83%, 100%
                 DestinationBuildYear = destinationBuildPeriod ?? (ModelYear.Y2030, ModelYear.Y2045, new(.3f)),
                 ErsBuildYear = (ersStartYear, ersEndYear),
                 StationBuildYear = stationBuildPeriod ?? (ModelYear.Y2025, ModelYear.Y2045, new(1f)),
@@ -475,7 +529,7 @@ namespace ScoreInfrastructurePlan
                     AvailablePowerPerUser_kW = GetDefaultInfrastructurePower(),
                     ErsReferenceSpeed_kmph = new KilometersPerHour(85),
                     ErsCoverageRatio = ersCoverageRatio,
-                    FinalErsLength_km = finalErsLength
+                    FinalErsNetworkScope_km = finalErsLength
                 },
                 ChargingStrategies = GetDefaultChargingStrategies()
             };
@@ -509,7 +563,8 @@ namespace ScoreInfrastructurePlan
                         ("neutral", paramScenarios.neutral),
                         ("pro-dynamic", paramScenarios.favorDynamicCharging),
                         ("pro-static", paramScenarios.favorStaticCharging),
-                        ("triple-renewables", paramScenarios.tripleRenewables),
+                        ("high-SCC", paramScenarios.highCostOfCarbon),
+                        //("triple-traffic", paramScenarios.tripleTraffic),
                     })
                     {
                         string suffix2 = suffix + (forceErsUse ? "_forced_ers" : "_optional_ers");
@@ -520,38 +575,52 @@ namespace ScoreInfrastructurePlan
                         scenarios.Add(s);
                     }
 
-                    var denseErs = Q8_GetExpectedScenario(
-                        sampleRatio,
-                        "dense-ers" + (forceErsUse ? "_forced_ers" : "_optional_ers"),
-                        finalErsLength: new(ers_km),
-                        ersCoverageRatio: new(1f),
-                        forceErsUse: forceErsUse);
-                    denseErs.After = paramScenarios.resetParameters;
-                    scenarios.Add(denseErs);
+                    //var denseErs = Q8_GetExpectedScenario(
+                    //    sampleRatio,
+                    //    "dense-ers" + (forceErsUse ? "_forced_ers" : "_optional_ers"),
+                    //    finalErsLength: new(ers_km),
+                    //    ersCoverageRatio: new(1f),
+                    //    forceErsUse: forceErsUse);
+                    //denseErs.After = paramScenarios.resetParameters;
+                    //scenarios.Add(denseErs);
 
                     var fastStatic = Q8_GetExpectedScenario(
                         sampleRatio,
                         "rapid-static" + (forceErsUse ? "_forced_ers" : "_optional_ers"),
-                        depotBuildPeriod: (ModelYear.Y2025, ModelYear.Y2030, new(.9f)),
-                        destinationBuildPeriod: (ModelYear.Y2025, ModelYear.Y2030, new(.3f)),
-                        stationBuildPeriod: (ModelYear.Y2025, ModelYear.Y2030, new(1f)),
-                        ersStartYear: ModelYear.Y2035,
+                        depotBuildPeriod: (ModelYear.Y2025, ModelYear.Y2050, new(.95f)),
+                        destinationBuildPeriod: (ModelYear.Y2030, ModelYear.Y2035, new(.3f)),
+                        stationBuildPeriod: (ModelYear.Y2025, ModelYear.Y2035, new(1f)),
+                        ersStartYear: ModelYear.Y2040,
                         finalErsLength: new(ers_km),
                         ersCoverageRatio: ersCoverageRatio,
                         forceErsUse: forceErsUse);
                     fastStatic.After = paramScenarios.resetParameters;
                     scenarios.Add(fastStatic);
+
+                    var cappedStatic = Q8_GetExpectedScenario(
+                        sampleRatio,
+                        "capperd-static" + (forceErsUse ? "_forced_ers" : "_optional_ers"),
+                        depotBuildPeriod: (ModelYear.Y2025, ModelYear.Y2050, new(.65f)),
+                        destinationBuildPeriod: (ModelYear.Y2030, ModelYear.Y2045, new(.15f)),
+                        stationBuildPeriod: (ModelYear.Y2025, ModelYear.Y2045, new(0.65f)),
+                        ersStartYear: ModelYear.Y2030,
+                        finalErsLength: new(ers_km),
+                        ersCoverageRatio: ersCoverageRatio,
+                        forceErsUse: forceErsUse);
+                    fastStatic.After = paramScenarios.resetParameters;
+                    scenarios.Add(cappedStatic);
                 }
             }
 
             return scenarios;
         }
 
-        private static (Action neutral, Action favorStaticCharging, Action favorDynamicCharging, Action expensiveBatteries, Action tripleRenewables, Action resetParameters) GetParameterVariations()
+        private static (Action neutral, Action favorStaticCharging, Action favorDynamicCharging, Action expensiveBatteries, Action tripleRenewables, Action highCostOfCarbon, Action resetParameters) GetParameterVariations()
         {
             //neutral, favor dynamic (low day-time electricity price), favor static (higher day-time electricity price), high CO2 tax, favor diesel, expensive batteries
 
             Action neutral = delegate () { };
+            
             Action favorStaticCharging = delegate ()
             {
                 //Higher ERS cost
@@ -559,13 +628,13 @@ namespace ScoreInfrastructurePlan
                 Parameters.Infrastructure.ERS_power_cost_euro_per_kW_km.SetToMultipleOfDefault(2f);
                 //Higher utilization for depot/station combo, due to merging
                 Parameters.Infrastructure.Depot_utilization_ratio.SetToMultipleOfDefault(1.45f);
-                Parameters.Infrastructure.Station_utilization_ratio.SetToMultipleOfDefault(1.45f);
+                Parameters.Infrastructure.Rest_Stop_utilization_ratio.SetToMultipleOfDefault(1.45f);
                 //High day-time electricity price
                 Parameters.World.SE12_Price_max_euro_per_kWh.SetToMultipleOfDefault(3f);
                 Parameters.World.SE34_Price_max_euro_per_kWh.SetToMultipleOfDefault(3f);
                 Parameters.World.OtherRegion_Price_max_euro_per_kWh.SetToMultipleOfDefault(3f);
-                //Slower growth in traffic volume
-                Parameters.World.Economy_Heavy_traffic_volume_vs_2020_percent.SetToExponentialTrendFromFirstValue(1.01f);
+                //No growth in traffic volume
+                Parameters.World.Economy_Heavy_traffic_volume_vs_2020_percent.SetToExponentialTrendFromFirstValue(1.00f);
             };
             Action favorDynamicCharging = delegate ()
             {
@@ -574,7 +643,7 @@ namespace ScoreInfrastructurePlan
                     v.ModifyDailyOperatingHoursAndAdjustDepotTimeAndAnnualDistance(annualChange: 1.02f);
 
                 //Greater utilization of trucks results in changed utilization of day-time and nighttime charging infrastructure
-                Parameters.Infrastructure.Station_utilization_ratio.SetToExponentialTrendFromFirstValue(1.01f);
+                Parameters.Infrastructure.Rest_Stop_utilization_ratio.SetToExponentialTrendFromFirstValue(1.01f);
                 Parameters.Infrastructure.Destination_utilization_ratio.SetToExponentialTrendFromFirstValue(1.01f);
                 Parameters.Infrastructure.ERS_utilization_ratio.SetToExponentialTrendFromFirstValue(1.01f);
                 Parameters.Infrastructure.Depot_utilization_ratio.SetToExponentialTrendFromFirstValue(0.99f);
@@ -594,12 +663,18 @@ namespace ScoreInfrastructurePlan
                 var cap = Parameters.World.RenewableDiesel_Supply_cap_liter_per_year.Select(n => n.Val * 3f).ToArray();
                 Parameters.ModifyRenewableFuelSupplyCap(cap);
             };
+            Action highCostOfCarbon = delegate ()
+            {
+                Parameters.ModifySCCAndCO2Tax(
+                    Parameters.World.CO2_SCC_euro_per_kg.Select(n => n.Val * 5).ToArray(),
+                    Parameters.World.CO2_Tax_ratio_of_SCC.Select(n => n.Val).ToArray());
+            };
             Action resetParameters = delegate ()
             {
                 Parameters.ResetAll();
             };
 
-            return (neutral, favorStaticCharging, favorDynamicCharging, expensiveBatteries, tripleRenewables, resetParameters);
+            return (neutral, favorStaticCharging, favorDynamicCharging, expensiveBatteries, tripleRenewables, highCostOfCarbon, resetParameters);
         }
 
         public static List<Scenario> GetRandomScenarios(Dimensionless sampleRate, int scenarioCount)
@@ -672,7 +747,7 @@ namespace ScoreInfrastructurePlan
                         AvailablePowerPerUser_kW = GetDefaultInfrastructurePower(),
                         ErsReferenceSpeed_kmph = new KilometersPerHour(85),
                         ErsCoverageRatio = new Dimensionless(1f),
-                        FinalErsLength_km = new Kilometers(0)
+                        FinalErsNetworkScope_km = new Kilometers(0)
                     },
                     ChargingStrategies = GetDefaultChargingStrategies(),
                     InheritInfraPower = false
@@ -693,7 +768,7 @@ namespace ScoreInfrastructurePlan
                         AvailablePowerPerUser_kW = GetDefaultInfrastructurePower(),
                         ErsReferenceSpeed_kmph = new KilometersPerHour(85),
                         ErsCoverageRatio = new Dimensionless(0.35f),
-                        FinalErsLength_km = new Kilometers(4000)
+                        FinalErsNetworkScope_km = new Kilometers(4000)
                     },
                     ChargingStrategies = GetDefaultChargingStrategies(),
                     InheritInfraPower = false

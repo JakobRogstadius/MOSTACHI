@@ -37,16 +37,18 @@ namespace ScoreInfrastructurePlan
 
             /*
              * Enable and disable experiments here. Define your own experiments in Experiments.cs
-             * Running one experiment typically takes a few hours up to a day for the Sweden dataset. A larger input dataset would take 
-             * proportionally longer time, which can be compensated for by reducing the sample ratio (above) or routing between fewer locations.
+             * Running one experiment (multiple scenarios) on the full Sweden dataset typically takes a few hours up to a day. A larger input dataset 
+             * would take proportionally longer time, which can be compensated for by reducing the sample ratio (above), by routing between fewer 
+             * locations, or by using some simplified road network other than OpenStreetMap. To route between fewer locations, ensure the density map 
+             * used to sample OD-coordinates within OD-regions (in CalculateRoutes) is zero-valued for most grid cells.
              */
+
+            //scenarios.AddRange(Experiments.Q1_AllDieselVsAllElectric(sampleRatio));
 
             scenarios.AddRange(Experiments.Q9_ParameterAndPolicyScenarios(sampleRatio));
 
-            scenarios.AddRange(Experiments.Q1_AllDieselVsAllElectric(sampleRatio));
-
             //Downsampling recommended, this evaluates 513 scenarios
-            scenarios.AddRange(Experiments.GetScenarioMatrix(sampleRatio, forcedErsUse: true).Shuffle());
+            //scenarios.AddRange(Experiments.GetScenarioMatrix(sampleRatio, forcedErsUse: true).Shuffle());
 
             return (scenarios, sampleRatio);
         }

@@ -7,6 +7,8 @@ using System.IO;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using System.Reflection.PortableExecutable;
+using System.Diagnostics;
+using System.Runtime;
 
 namespace ScoreInfrastructurePlan
 {
@@ -28,6 +30,8 @@ namespace ScoreInfrastructurePlan
 
         private static void CalculateScenarios(List<Scenario> scenarios, Dimensionless sampleRatio)
         {
+            Console.WriteLine("Simulating " + scenarios.Count + " scenarios, in total " + scenarios.Sum(n => n.SimStartYear.GetSequence(n.SimEndYear).Length) + " 5-year periods.\n");
+
             Console.WriteLine("Loading data from disk into RAM...");
 
             Console.WriteLine("  Indexing all route segments...");
@@ -49,10 +53,22 @@ namespace ScoreInfrastructurePlan
             Console.WriteLine();
             Console.WriteLine("Done initializing");
 
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+            int i = 0;
             foreach (Scenario scenario in scenarios)
             {
+                if (watch.Elapsed.TotalSeconds > 60)
+                {
+                    double progress = i / (double)scenarios.Sum(n => n.SimStartYear.GetSequence(scenario.SimEndYear).Length);
+                    double totalTimeEstimate = watch.Elapsed.TotalSeconds / progress;
+                    TimeSpan remaining = new TimeSpan(0, 0, (int)totalTimeEstimate);
+
+                    Console.WriteLine();
+                    Console.WriteLine("Estimated time remaining: " + remaining);
+                }
+
                 scenario.Before();
-                //TODO: Modify Parameters.cs to make it impossible to adjust all derived parameters, like CO2 tax in euro per liter. Instead, (p)recompute them here.
 
                 Console.WriteLine();
                 Console.WriteLine("Evaluating " + scenario.Name + "...");
@@ -72,6 +88,8 @@ namespace ScoreInfrastructurePlan
                 scenario.After();
 
                 Console.WriteLine("  Finished evaluating \"" + scenario.Name + "\"");
+
+                i += scenario.SimStartYear.GetSequence(scenario.SimEndYear).Length;
             }
         }
 
@@ -330,18 +348,23 @@ namespace ScoreInfrastructurePlan
                 modelYears.Add(year);
 
             Years ersBuildYearCount = new Years(modelYears.Where(n => n >= scenario.ErsBuildYear.From && n <= scenario.ErsBuildYear.To).Count());
-            KilometersPerYear ersKmPerYear = scenario.InfraOffers.FinalErsLength_km / ersBuildYearCount;
+            KilometersPerYear ersKmPerYear = scenario.InfraOffers.FinalErsNetworkScope_km / ersBuildYearCount;
             ModelYear currentErsYear = scenario.ErsBuildYear.From;
-            Kilometers currentErsNetworkSize_km = new Kilometers(0), currentErsNetworkWithCoverage_km = new Kilometers(0), endOfYearErsLength = new Kilometers(ersKmPerYear.Val);
+            Kilometers currentErsNetworkSize_km = new Kilometers(0);
+            Kilometers currentErsNetworkWithCoverage_km = new Kilometers(0);
+            Kilometers endOfYearErsLength = new Kilometers(ersKmPerYear.Val);
+
+            //BUG: I'm not sure, but I suspect there is a bug here somewhere. When I compare BEV share with 2k and 6k km ERS,
+            //the BEV share is identical after the first build year, even though network sizes should differ.
 
             //Load the build order. This list contains ONLY road segments.
-            if (scenario.ErsBuildYear.From != ModelYear.N_A && scenario.InfraOffers.FinalErsLength_km > 0)
+            if (scenario.ErsBuildYear.From != ModelYear.N_A && scenario.InfraOffers.FinalErsNetworkScope_km > 0)
             {
                 List<int> clusterIDsInBuildOrder = File.ReadAllLines(Paths.ErsBuildOrder).Select(n => int.Parse(n)).ToList();
                 foreach (int clusterID in clusterIDsInBuildOrder)
                 {
                     RouteSegment roadSegment = allSegments[clusterID];
-                    if (currentErsNetworkSize_km >= scenario.InfraOffers.FinalErsLength_km)
+                    if (currentErsNetworkSize_km >= scenario.InfraOffers.FinalErsNetworkScope_km)
                         break;
 
                     if (currentErsNetworkSize_km == 0 || currentErsNetworkWithCoverage_km / currentErsNetworkSize_km < scenario.InfraOffers.ErsCoverageRatio)
@@ -350,7 +373,7 @@ namespace ScoreInfrastructurePlan
                         currentErsNetworkWithCoverage_km += roadSegment.BidirectionalRoadLengthToElectrify_km;
                     }
                     currentErsNetworkSize_km += roadSegment.BidirectionalRoadLengthToElectrify_km;
-                    if (endOfYearErsLength <= currentErsNetworkSize_km && currentErsNetworkSize_km < scenario.InfraOffers.FinalErsLength_km)
+                    if (endOfYearErsLength <= currentErsNetworkSize_km && currentErsNetworkSize_km < scenario.InfraOffers.FinalErsNetworkScope_km)
                     {
                         currentErsYear = currentErsYear.Next();
                         endOfYearErsLength += new Kilometers(ersKmPerYear.Val);
@@ -810,18 +833,18 @@ namespace ScoreInfrastructurePlan
 
                     BatteryWear_kWhPerYear += costs.BatteryAgeing_kWhPerYear_in_SE;
                     float tripsPerYear = costs.TotalAnnualRouteKm.Val / route_vehicletype.Route.Length_km.Val;
+                    //BUG: I don't know what this value represents in the end.
                     BatteryWear_kWhPerKWh += costs.BatteryAgeing_kWhPerYear_in_SE / new KiloWattHoursPerYear(costs.EnergyCostPerTraversal_kWh.Val * tripsPerYear);
 
                     v.BEV_kmPerYear += costs.TotalAnnualRouteKmInSweden;
                     var kWhPerPlacementPerTrip = costs.InfraUsePerTraversal.GroupBy(n => n.Key.Type).Select(g => (Placement: g.Key, kWhPurchased: new KiloWattHoursPerYear(tripsPerYear * g.Sum(n => n.Value.kWh.Val))));
                     foreach (var kWh in kWhPerPlacementPerTrip)
                         VehicleTypes[route_vehicletype.VehicleType].InfraPlacement_KWhPerYear[kWh.Placement] += kWh.kWhPurchased;
-                    
-                    var csStats = ChargingStrategies[values.chargingStrategy];
-                    csStats.Kilometers += costs.TotalAnnualRouteKmInSweden;
-                    csStats.TonKilometers += costs.TotalAnnualRouteTonKmInSweden;
-                    csStats.RoutesCount++;
                 }
+                var csStats = ChargingStrategies[values.chargingStrategy];
+                csStats.Kilometers += costs.TotalAnnualRouteKmInSweden;
+                csStats.TonKilometers += costs.TotalAnnualRouteTonKmInSweden;
+                csStats.RoutesCount++;
             }
 
             public void Increment(RouteSegment segment, ChargingSiteCost infra)

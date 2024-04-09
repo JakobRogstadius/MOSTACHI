@@ -47,7 +47,7 @@ namespace ScoreInfrastructurePlan
             return DepotBuildYear.From <= year && DepotBuildYear.FinalRatio > 0
                 || DestinationBuildYear.From <= year && DestinationBuildYear.FinalRatio > 0
                 || StationBuildYear.From <= year && StationBuildYear.FinalRatio > 0
-                || ErsBuildYear.From <= year && InfraOffers.FinalErsLength_km > 0;
+                || ErsBuildYear.From <= year && InfraOffers.FinalErsNetworkScope_km > 0;
         }
 
         /// <summary>Use this to change global settings between scenarios.</summary>

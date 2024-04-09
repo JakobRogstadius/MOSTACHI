@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Reflection.Metadata;
 using static ScoreInfrastructurePlan.Parameters;
 
 namespace ScoreInfrastructurePlan
@@ -238,9 +239,26 @@ namespace ScoreInfrastructurePlan
             Common_Annual_distance_km.Set(kmPerYear);
         }
 
-        public KiloWatts GetPowerConsumption_kW(ModelYear year, KilometersPerHour speed_kmph)
+        public KiloWatts GetPowerConsumption_kW(ModelYear year, KilometersPerHour speed_kmph, KiloWattHours netBatteryCapacity_kWh, bool hasErsPickup)
         {
-            return BEV_Energy_consumption_kWh_per_km[year] * speed_kmph;
+            //Adjust BEV energy consumption based on vehicle mass
+            
+            //From Tony Sandberg's thesis: 10% weight change => 5% fuel consumption change
+            
+            //From Mats Alaküla: We must add consumtion for the friction losses(conductive ERS), with a typical friction coefficienct of 0.25.
+            //For trucks, with 5 pickups, 100N / pickup and 90 km / h this corresponds to about 3 kW (friction, drag unspecified), compared to 100 kW of traction power or 3 %, used 50 % of the time while on ERS meaning ~1 % of the energy consumtion.
+            //There is also an effect on aerodynamics. This is VERY hard to set a good figure for.
+            
+            //There is going to be SOME difference in efficiency between energy transmission via ERS and via cable charging, but I cannot even figure out which has greater total losses.
+            //I assume no net effect on energy consumption from ERS charging.
+
+            Kilogram bevWeight = GetFullBevWeight(year, netBatteryCapacity_kWh, hasErsPickup);
+            Kilogram icevWeight = ICEV_Chassis_weight_kg[year];
+            var weightRatio = (bevWeight - icevWeight) / icevWeight;
+
+            Dimensionless weightDiffEffect = 1 + weightRatio * 0.5f * (1 - _shareOfWeightDiffForCargo);
+            
+            return BEV_Energy_consumption_kWh_per_km[year] * speed_kmph * weightDiffEffect;
         }
 
         public EuroPerKilometer ICEV_ChassisAndMaintenance_cost_euro_per_km(ModelYear year, KilometersPerYear km_per_year = null)
@@ -264,16 +282,22 @@ namespace ScoreInfrastructurePlan
                 + vehCost;
         }
 
-        static readonly Kilogram ZeroWeight = new Kilogram(0);
+        public Kilogram GetFullBevWeight(ModelYear year, KiloWattHours netBatteryCapacity_kWh, bool hasErsPickup)
+        {
+            Kilogram batteryWeight = new Kilogram(netBatteryCapacity_kWh.Val / Battery.Net_Specific_energy_kWh_per_kg[year].Val);
+            Kilogram pickupWeight = hasErsPickup ? Infrastructure.ERS_pick_up_weight_heavy_kg[year] : _zeroWeight;
+            return BEV_Chassis_weight_excl_battery_kg[year] + batteryWeight + pickupWeight;
+        }
+
+        static readonly Kilogram _zeroWeight = new (0);
+        static readonly Dimensionless _shareOfWeightDiffForCargo = new (0.3f);
         public Dimensionless BEV_Carrying_capacity_ratio_of_ICEV(ModelYear year, KiloWattHours netBatteryCapacity_kWh, bool hasErsPickup)
         {
-            Kilogram batteryWeight = netBatteryCapacity_kWh / Battery.Net_Specific_energy_kWh_per_kg[year];
-            Kilogram pickupWeight = hasErsPickup ? Infrastructure.ERS_pick_up_weight_heavy_kg[year] : ZeroWeight;
-            Kilogram bevWeight = BEV_Chassis_weight_excl_battery_kg[year];
+            Kilogram bevWeight = GetFullBevWeight(year, netBatteryCapacity_kWh, hasErsPickup);
             Kilogram icevWeight = ICEV_Chassis_weight_kg[year];
             Kilogram limit = Common_Total_weight_limit_kg[year];
             //Because only some transports are weight limited, only give half gain/penalty for weight change.
-            return 0.5f + 0.5f * ((limit - bevWeight - batteryWeight - pickupWeight) / (limit - icevWeight));
+            return 1 - _shareOfWeightDiffForCargo + _shareOfWeightDiffForCargo * ((limit - bevWeight) / (limit - icevWeight));
         }
 
         public Hours GetNormalizedDepotTime_h(ModelYear year, Hours routeLength_h)
@@ -382,14 +406,14 @@ namespace ScoreInfrastructurePlan
             KiloWattHours netCapacityUseable_kWh)
         {
             //cycle ageing
-            KiloWattHours lifetime_kWh = netCapacityUseable_kWh * batteryTech.Net_Cycle_lifetime_cycles[year] * new Dimensionless(2); //2 = in + out
+            KiloWattHours lifetime_kWh_bidirectional = netCapacityUseable_kWh * new Dimensionless(batteryTech.Net_Cycle_lifetime_cycles[year].Val * 2); //2 = in + out
 
             Dimensionless normChargingRate = charging_cRate_net / Battery.Net_Reference_charging_rate_c[year];
             Dimensionless normDischargingRate = discharging_cRate_net / Battery.Net_Reference_discharging_rate_c[year];
 
             //Dim: 0 per kWh
-            OtherUnit chargingWearPerkWh_ratio_per_kWh = (OtherUnit)(Math.Max(minAgeingRate.Val, normChargingRate.Val * normChargingRate.Val) / lifetime_kWh.Val); //Slow charging helps a little, fast charging hurts a lot
-            OtherUnit dischargingWearPerkWh_ratio_per_kWh = (OtherUnit)(Math.Max(minAgeingRate.Val, normDischargingRate.Val * normDischargingRate.Val) / lifetime_kWh.Val);
+            OtherUnit chargingWearPerkWh_ratio_per_kWh = (OtherUnit)(Math.Max(minAgeingRate.Val, normChargingRate.Val * normChargingRate.Val) / lifetime_kWh_bidirectional.Val); //Slow charging helps a little, fast charging hurts a lot
+            OtherUnit dischargingWearPerkWh_ratio_per_kWh = (OtherUnit)(Math.Max(minAgeingRate.Val, normDischargingRate.Val * normDischargingRate.Val) / lifetime_kWh_bidirectional.Val);
 
             //Ratio of battery ageing from cycling during this time period
             Dimensionless chargingWear_ratio = new Dimensionless(charging_kWh.Val * chargingWearPerkWh_ratio_per_kWh.Val);
@@ -443,7 +467,7 @@ namespace ScoreInfrastructurePlan
                 RouteSegmentType.Depot => Infrastructure.Depot_electricity_price_ratio[year],
                 RouteSegmentType.Destination => Infrastructure.Destination_electricity_price_ratio[year],
                 RouteSegmentType.Road => Infrastructure.ERS_electricity_price_ratio[year],
-                RouteSegmentType.RestStop => Infrastructure.Station_electricity_price_ratio[year],
+                RouteSegmentType.RestStop => Infrastructure.Rest_Stop_electricity_price_ratio[year],
                 _ => throw new NotImplementedException(),
             };
             return priceHigh * r + priceLow * (1 - r);
@@ -473,10 +497,10 @@ namespace ScoreInfrastructurePlan
 
         }
 
-        public static void ModifySCCAndCO2Tax(float[] SCC, float[] co2Tax)
+        public static void ModifySCCAndCO2Tax(float[] SCC, float[] co2TaxRatio)
         {
             World.CO2_SCC_euro_per_kg.Set(SCC);
-            World.CO2_Tax_ratio_of_SCC.Set(co2Tax);
+            World.CO2_Tax_ratio_of_SCC.Set(co2TaxRatio);
             List<float> se12 = new();
             List<float> se34 = new();
             List<float> other = new();
