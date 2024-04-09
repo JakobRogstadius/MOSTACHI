@@ -2,7 +2,9 @@
 
 This repository contains source code and input data for MOSTACHI - Model for Optimization and Simulation of Traffic And CHarging Infrastructure. MOSTACHI is a free and open-source agent-based simulation tool designed to study interaction effects in time and space between logistics patterns, competing charging infrastructure and cost-minimizing vehicle operators.
 
-Datasets to run simulations of heavy truck traffic on the Swedish road network are currently available in the repository. If you wish to perform studies with the bundled input data, jump ahead and [start running experiments](#run-experiments). 
+Datasets to run simulations of heavy truck traffic on the Swedish road network are currently available in the repository. If you wish to perform studies with the bundled input data, jump ahead and [start running experiments](#run-experiments).
+
+Data in similar format covering [all of Europe at NUTS3 resolution](https://data.mendeley.com/datasets/py2zkrb65h/1) exists. Reach out if you need support in adapting the codebase to work with that or other data.
 
 To study other road networks than the Swedish or other vehicle groups than heavy trucks, new traffic pattern data is required. Follow the steps below to set up the tool for your transport system of interest.
 
@@ -61,7 +63,9 @@ The `-c Release` option turns on optimization and parallel execution of the code
 
 The simulation tool was originally developed to analyze traffic on the Swedish road network. As input, we have used an origin-destination (OD) matrix output by the Samgods simulation tool, for the 2016 base scenario. This dataset consists of four files (of which only the first three are ever read by the program). For reference, the simulation tool was developed using a dataset of approximately 200,000 routes between approximately 1,000 places, with estimated traffic intensity for each of four truck classes for each route.
 
-Later on, running the simulation can take minutes to days, depending on geographic area and experimental setup. By also preparing truncated versions of `routes.csv` and `routevehicletype.csv` describing smaller OD matrices, you will have a small dataset for testing to facilitate rapid iteration during development. The directory `data/small` gives one such very small dataset that can be used to verify that the installation of code and tools was successful.
+Similar transport flow data between [all European NUTS3 regions](https://data.mendeley.com/datasets/py2zkrb65h/1) exists. Get in touch if you want to collaborate on analyzing new datasets.
+
+Running the simulation on national or international-scale datasets can take minutes to days, depending on experimental setup. By also preparing truncated versions of `routes.csv` and `routevehicletype.csv` describing smaller OD matrices, you will have a small dataset for testing to facilitate rapid iteration during development. The directory `data/small` gives one such very small dataset that can be used to verify that the installation of code and tools was successful.
 
 `places.csv`:
 
