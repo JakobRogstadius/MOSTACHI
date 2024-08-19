@@ -6,9 +6,16 @@ using System.Threading.Tasks;
 
 namespace ScoreInfrastructurePlan
 {
+    public class LogSettings
+    {
+        public bool PrintInfraRasterLog { get; set; } = true;
+        public bool PrintDrivingRasterLog { get; set; } = true;
+        public bool PrintRoutesLog { get; set; } = true;
+    }
+
     internal class ExperimentSetup
     {
-        public static (List<Scenario> scenarios, Dimensionless sampleRatio) GetScenarios()
+        public static (List<Scenario> scenarios, Dimensionless sampleRatio, LogSettings settings) GetScenarios()
         {
             /*
              * THIS IS YOUR LAB! 
@@ -47,10 +54,12 @@ namespace ScoreInfrastructurePlan
 
             scenarios.AddRange(Experiments.Q9_ParameterAndPolicyScenarios(sampleRatio));
 
+            //scenarios.AddRange(Experiments.Q10_RestStopFrequency(sampleRatio));
+
             //Downsampling recommended, this evaluates 513 scenarios
             //scenarios.AddRange(Experiments.GetScenarioMatrix(sampleRatio, forcedErsUse: true).Shuffle());
 
-            return (scenarios, sampleRatio);
+            return (scenarios, sampleRatio, new LogSettings() { PrintRoutesLog = false, PrintDrivingRasterLog = false, PrintInfraRasterLog = false });
         }
     }
 }

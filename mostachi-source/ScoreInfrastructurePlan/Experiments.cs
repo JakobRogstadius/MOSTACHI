@@ -563,7 +563,7 @@ namespace ScoreInfrastructurePlan
                         ("neutral", paramScenarios.neutral),
                         ("pro-dynamic", paramScenarios.favorDynamicCharging),
                         ("pro-static", paramScenarios.favorStaticCharging),
-                        ("high-SCC", paramScenarios.highCostOfCarbon),
+                        //("high-SCC", paramScenarios.highCostOfCarbon),
                         //("triple-traffic", paramScenarios.tripleTraffic),
                     })
                     {
@@ -599,7 +599,7 @@ namespace ScoreInfrastructurePlan
 
                     var cappedStatic = Q8_GetExpectedScenario(
                         sampleRatio,
-                        "capperd-static" + (forceErsUse ? "_forced_ers" : "_optional_ers"),
+                        "capped-static" + (forceErsUse ? "_forced_ers" : "_optional_ers"),
                         depotBuildPeriod: (ModelYear.Y2025, ModelYear.Y2050, new(.65f)),
                         destinationBuildPeriod: (ModelYear.Y2030, ModelYear.Y2045, new(.15f)),
                         stationBuildPeriod: (ModelYear.Y2025, ModelYear.Y2045, new(0.65f)),
@@ -613,6 +613,33 @@ namespace ScoreInfrastructurePlan
             }
 
             return scenarios;
+        }
+
+        public static List<Scenario> Q10_RestStopFrequency(Dimensionless sampleRatio)
+        {
+            var scenarios = Q9_ParameterAndPolicyScenarios(sampleRatio).Where(n => n.Name.Contains("pro-static"));
+            var scenarios2 = Q9_ParameterAndPolicyScenarios(sampleRatio).Where(n => n.Name.Contains("pro-static"));
+            foreach (var scenario in scenarios2) {
+                scenario.Name += "_shortstops";
+                var init = scenario.Before;
+                scenario.Before = () =>
+                {
+                    init();
+                    Parameters.MGV16.Common_Rest_stop_h.SetToMultipleOfDefault(0.5f);
+                    Parameters.MGV24.Common_Rest_stop_h.SetToMultipleOfDefault(0.5f);
+                    Parameters.HGV40.Common_Rest_stop_h.SetToMultipleOfDefault(0.5f);
+                    Parameters.HGV60.Common_Rest_stop_h.SetToMultipleOfDefault(0.5f);
+
+                    Parameters.MGV16.Common_Drive_session_h.SetToMultipleOfDefault(0.5f);
+                    Parameters.MGV24.Common_Drive_session_h.SetToMultipleOfDefault(0.5f);
+                    Parameters.HGV40.Common_Drive_session_h.SetToMultipleOfDefault(0.5f);
+                    Parameters.HGV60.Common_Drive_session_h.SetToMultipleOfDefault(0.5f);
+                };
+
+                scenario.After = Parameters.ResetAll;
+            }
+            
+            return scenarios.Union(scenarios2).ToList();
         }
 
         private static (Action neutral, Action favorStaticCharging, Action favorDynamicCharging, Action expensiveBatteries, Action tripleRenewables, Action highCostOfCarbon, Action resetParameters) GetParameterVariations()

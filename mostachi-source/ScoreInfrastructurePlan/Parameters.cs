@@ -241,24 +241,38 @@ namespace ScoreInfrastructurePlan
 
         public KiloWatts GetPowerConsumption_kW(ModelYear year, KilometersPerHour speed_kmph, KiloWattHours netBatteryCapacity_kWh, bool hasErsPickup)
         {
-            //Adjust BEV energy consumption based on vehicle mass
-            
-            //From Tony Sandberg's thesis: 10% weight change => 5% fuel consumption change
-            
             //From Mats Alaküla: We must add consumtion for the friction losses(conductive ERS), with a typical friction coefficienct of 0.25.
             //For trucks, with 5 pickups, 100N / pickup and 90 km / h this corresponds to about 3 kW (friction, drag unspecified), compared to 100 kW of traction power or 3 %, used 50 % of the time while on ERS meaning ~1 % of the energy consumtion.
             //There is also an effect on aerodynamics. This is VERY hard to set a good figure for.
-            
+
             //There is going to be SOME difference in efficiency between energy transmission via ERS and via cable charging, but I cannot even figure out which has greater total losses.
             //I assume no net effect on energy consumption from ERS charging.
 
+            return GetEnergyConsumption_kWh_per_km(year, netBatteryCapacity_kWh, hasErsPickup) * speed_kmph;
+        }
+
+        public KiloWattHoursPerKilometer GetEnergyConsumption_kWh_per_km(ModelYear year, KiloWattHours netBatteryCapacity_kWh, bool hasErsPickup)
+        {
+            //Adjust BEV energy consumption based on vehicle mass
+
+            //From Tony Sandberg's thesis: 10% weight change => 5% fuel consumption change
+
+            const float weightToChangeRatio = 0.5f;
+
             Kilogram bevWeight = GetFullBevWeight(year, netBatteryCapacity_kWh, hasErsPickup);
             Kilogram icevWeight = ICEV_Chassis_weight_kg[year];
-            var weightRatio = (bevWeight - icevWeight) / icevWeight;
 
-            Dimensionless weightDiffEffect = 1 + weightRatio * 0.5f * (1 - _shareOfWeightDiffForCargo);
-            
-            return BEV_Energy_consumption_kWh_per_km[year] * speed_kmph * weightDiffEffect;
+            //TODO: make energy consumption dependent on the cargo mass on this specific route.
+            //For now, assume the average route runs 80% with load, 60% filled by weight (when loaded)
+            //https://www.trafa.se/globalassets/pm/underlag/statistikunderlag_roerande_tomdragningar_och_fyllnadsgrader.pdf
+            Kilogram icevCargoWeight = (Common_Total_weight_limit_kg[year] - icevWeight) * new Dimensionless(0.8f * 0.6f);
+            Kilogram truckWeightDiff = bevWeight - icevWeight;
+            //The weight difference is partially compensated for by a change in cargo weight
+            var gtwWeightRatio = (truckWeightDiff * (1 - _shareOfWeightDiffForCargo)) / (icevWeight +  icevCargoWeight);
+
+            Dimensionless weightDiffEffect = 1 + gtwWeightRatio * weightToChangeRatio;
+
+            return BEV_Energy_consumption_kWh_per_km[year] * weightDiffEffect;
         }
 
         public EuroPerKilometer ICEV_ChassisAndMaintenance_cost_euro_per_km(ModelYear year, KilometersPerYear km_per_year = null)

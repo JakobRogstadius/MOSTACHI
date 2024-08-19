@@ -427,7 +427,7 @@ namespace ScoreInfrastructurePlan
                     BatteryAgeing_kWhPerKm = grossConsumptionOfVehicleQualityBatteries_kwhPerKm,
                     ErsPickupAgeing_euroPerKm = ersPickup_euroPerKm,
                     Energy_euroPerKm = energy_euroPerKm,
-                    Road_and_pollution_tax_euroPerKm = Parameters.World.Electricity_Road_tax_euro_per_kWh[year] * vt.BEV_Energy_consumption_kWh_per_km[year],
+                    Road_and_pollution_tax_euroPerKm = Parameters.World.Electricity_Road_tax_euro_per_kWh[year] * vt.GetEnergyConsumption_kWh_per_km(year, netBatteryCapacity_kWh, hasPickup),
                     CO2_euroPerKm_total = co2_euroPerKm_total,
                     CO2_euroPerKm_internalized = co2_euroPerKm_internalized,
                     VehicleAgeing_euroPerKm = vehicle_euroPerKm,
@@ -516,7 +516,7 @@ namespace ScoreInfrastructurePlan
                 currentCharge_kWh += step.delta_kWh;
 
                 //If everything still works as intended but the battery still goes below the minimum acceptable range buffer, reject this solution
-                if (currentCharge_kWh < route.VehicleType.BEV_Energy_consumption_kWh_per_km[year] * route.VehicleType.BEV_Min_range_buffer_km[year])
+                if (currentCharge_kWh < route.VehicleType.GetEnergyConsumption_kWh_per_km(year, netBatteryCapacity_kWh, chargingStrat.HasErsPickup()) * route.VehicleType.BEV_Min_range_buffer_km[year])
                 {
                     if (Parameters.VERBOSE) Console.WriteLine("-X");
                     return (false, new KiloWattHours(0), null, null);
@@ -534,8 +534,9 @@ namespace ScoreInfrastructurePlan
 
             if (Parameters.VERBOSE) Console.WriteLine("-O");
 
-            KiloWattHours kWhSpentPerTraversal = route.VehicleType.BEV_Energy_consumption_kWh_per_km[year] * route.Route.Length_km;
-            KiloWattHours bufferKWh = route.VehicleType.BEV_Energy_consumption_kWh_per_km[year] * route.VehicleType.BEV_Min_range_buffer_km[year];
+            KiloWattHoursPerKilometer kWhPerKm = route.VehicleType.GetEnergyConsumption_kWh_per_km(year, netBatteryCapacity_kWh, chargingStrat.HasErsPickup());
+            KiloWattHours kWhSpentPerTraversal = kWhPerKm * route.Route.Length_km;
+            KiloWattHours bufferKWh = kWhPerKm * route.VehicleType.BEV_Min_range_buffer_km[year];
             bool tripNeedsMoreThanHalfBattery = kWhSpentPerTraversal * new Dimensionless(2) > (netBatteryCapacity_kWh - bufferKWh);
             Dimensionless gainToSpendRatio = cumulativeCost.ElectricityPurchased_kWh / kWhSpentPerTraversal;
             //TODO: For short routes without depot or destination charging available and which don't travel much on ERS, there is no way to charge. 

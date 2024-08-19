@@ -16,10 +16,10 @@ namespace ScoreInfrastructurePlan
     {
         public static void Run()
         {
-            (var scenarios, var sampleRatio) = ExperimentSetup.GetScenarios();
+            (var scenarios, var sampleRatio, var logSettings) = ExperimentSetup.GetScenarios();
 
             //Run experiments
-            CalculateScenarios(scenarios, sampleRatio);
+            CalculateScenarios(scenarios, sampleRatio, logSettings);
 
             /* Uncomment this to sample many routes and calculate transport cost per km for different configurations */
             //CalculateCostPerKmPerBatteryCapacityAndChargingStrategy();
@@ -28,7 +28,7 @@ namespace ScoreInfrastructurePlan
             Console.WriteLine("All finished!");
         }
 
-        private static void CalculateScenarios(List<Scenario> scenarios, Dimensionless sampleRatio)
+        private static void CalculateScenarios(List<Scenario> scenarios, Dimensionless sampleRatio, LogSettings logSettings)
         {
             Console.WriteLine("Simulating " + scenarios.Count + " scenarios, in total " + scenarios.Sum(n => n.SimStartYear.GetSequence(n.SimEndYear).Length) + " 5-year periods.\n");
 
@@ -83,7 +83,7 @@ namespace ScoreInfrastructurePlan
                     movementPatternIterator,
                     scenario);
 
-                PrintExperimentLog(scenario, modelYearResults, routeVariantCellSequences);
+                PrintExperimentLog(scenario, modelYearResults, routeVariantCellSequences, logSettings);
 
                 scenario.After();
 
@@ -439,7 +439,8 @@ namespace ScoreInfrastructurePlan
 
         private static void PrintExperimentLog(Scenario scenario,
             IEnumerable<(ModelYear year, RouteVehicleTypeBehavior routeStrategies, Dictionary<RouteSegment, ChargingSiteCost> infraSet)> modelYearResults,
-            Dictionary<(int routeID, int variantNumber), CoordinateHash[]> routeVariantCellSequences
+            Dictionary<(int routeID, int variantNumber), CoordinateHash[]> routeVariantCellSequences,
+            LogSettings logSettings
             )
         {
             StringBuilder sbStatsHeader = new StringBuilder();
@@ -492,7 +493,7 @@ namespace ScoreInfrastructurePlan
                 var binnedStaticInfra = infraSegments
                     .Where(n => n.segment.Type != RouteSegmentType.Road)
                     .GroupBy(n => (n.bin, n.segment.Type))
-                    .Select(g => 
+                    .Select(g =>
                 {
                     var energyDelivered_kWhPerYear = new KiloWattHoursPerYear(g.Sum(n => n.cost.EnergyDelivered_kWhPerYear.Val));
                     var installedPower_kW = new KiloWatts(g.Sum(n => n.cost.InstalledPower_kWPeak_Segment.Val));
@@ -506,15 +507,15 @@ namespace ScoreInfrastructurePlan
                     return (
                     binID: g.Key.bin.Index.ToString(),
                     coordinate: g.Key.bin,
-                    type: g.Key.Type, 
-                    energyDelivered_kWhPerYear, 
-                    installedPower_kW, 
-                    installedPower_kWPerLaneKm, 
-                    usedPower_kW, 
-                    usedPower_kWPerLaneKm, 
-                    cost_EuroPerYear, 
-                    cost_EuroPerKWh, 
-                    meanSocOnArrival, 
+                    type: g.Key.Type,
+                    energyDelivered_kWhPerYear,
+                    installedPower_kW,
+                    installedPower_kWPerLaneKm,
+                    usedPower_kW,
+                    usedPower_kWPerLaneKm,
+                    cost_EuroPerYear,
+                    cost_EuroPerKWh,
+                    meanSocOnArrival,
                     laneKm: new Kilometers(0),
                     ersCandidateKm: new Kilometers(0),
                     bidirectionalErsKm: new Kilometers(0));
@@ -539,18 +540,18 @@ namespace ScoreInfrastructurePlan
                         var cost_EuroPerKWh = new EuroPerKiloWattHour(g.Sum(n => n.cost.Cost_EuroPerYear.Val) / g.Sum(n => n.cost.EnergyDelivered_kWhPerYear.Val));
                         var meanSocOnArrival = new Dimensionless(g.Average(n => n.cost.MeanSocOnArrival.Val));
                         var coord = CoordinateHash.Sweref99TMIndex_toCoordinate(g.Key);
-                        
+
                         return (
                             binID: g.Key,
-                            coordinate: coord, 
+                            coordinate: coord,
                             type: RouteSegmentType.Road,
-                            energyDelivered_kWhPerYear, 
-                            installedPower_kW, 
-                            installedPower_kWPerLaneKm, 
-                            usedPower_kW, 
-                            usedPower_kWPerLaneKm, 
-                            cost_EuroPerYear, 
-                            cost_EuroPerKWh, 
+                            energyDelivered_kWhPerYear,
+                            installedPower_kW,
+                            installedPower_kWPerLaneKm,
+                            usedPower_kW,
+                            usedPower_kWPerLaneKm,
+                            cost_EuroPerYear,
+                            cost_EuroPerKWh,
                             meanSocOnArrival,
                             laneKm,
                             ersCandidateKm,
@@ -687,9 +688,12 @@ namespace ScoreInfrastructurePlan
 
             File.WriteAllText(Paths.ExperimentLog.Replace(".txt", ".stats.txt"), sbStatsHeader.ToString() + sbStatsDataSim.ToString());
             File.WriteAllText(Paths.ExperimentLog.Replace(".txt", ".adjusted.stats.txt"), sbStatsHeader.ToString() + sbStatsDataAdjusted.ToString());
-            File.WriteAllText(Paths.ExperimentLog.Replace(".txt", ".infra_raster.txt"), sbInfraRaster.ToString());
-            File.WriteAllText(Paths.ExperimentLog.Replace(".txt", ".driving_raster.txt"), sbDriving.ToString());
-            File.WriteAllText(Paths.ExperimentLog.Replace(".txt", ".routes.txt"), sbRoutes.ToString());
+            if (logSettings.PrintInfraRasterLog)
+                File.WriteAllText(Paths.ExperimentLog.Replace(".txt", ".infra_raster.txt"), sbInfraRaster.ToString());
+            if (logSettings.PrintDrivingRasterLog)
+                File.WriteAllText(Paths.ExperimentLog.Replace(".txt", ".driving_raster.txt"), sbDriving.ToString());
+            if (logSettings.PrintRoutesLog)
+                File.WriteAllText(Paths.ExperimentLog.Replace(".txt", ".routes.txt"), sbRoutes.ToString());
 
             File.AppendAllText(Paths.ExperimentLog.Replace(".txt", ".stats.txt"), Environment.NewLine + "Cumulative system cost is " + Math.Round(cumulativeCost_euro.Val / 1e6f) + " M€" + Environment.NewLine);
         }
@@ -739,7 +743,7 @@ namespace ScoreInfrastructurePlan
 
             public class YearlyChargerPlacementStats
             {
-                public EuroPerYear EuroPerYear = new (0);
+                public EuroPerYear EuroPerYear = new(0);
                 public KiloWattHoursPerYear KiloWattHoursPerYear = new(0);
                 public EuroPerKiloWattHour EuroPerKiloWattHour { get { return EuroPerYear / KiloWattHoursPerYear; } }
             }
@@ -749,9 +753,9 @@ namespace ScoreInfrastructurePlan
 
             public class YearlyVehicleTypeStats
             {
-                public KilometersPerYear ICEV_kmPerYear = new (0);
-                public KilometersPerYear BEV_kmPerYear = new (0);
-                public Dictionary<RouteSegmentType, KiloWattHoursPerYear> InfraPlacement_KWhPerYear= new();
+                public KilometersPerYear ICEV_kmPerYear = new(0);
+                public KilometersPerYear BEV_kmPerYear = new(0);
+                public Dictionary<RouteSegmentType, KiloWattHoursPerYear> InfraPlacement_KWhPerYear = new();
                 public KiloWattHoursPerYear KWhPerYear { get { return new KiloWattHoursPerYear(InfraPlacement_KWhPerYear.Values.Sum(n => n.Val)); } }
                 public Dimensionless ICEV_km_ratio { get { return ICEV_kmPerYear / (ICEV_kmPerYear + BEV_kmPerYear); } }
                 public Dimensionless InfraPlacement_km_ratio(RouteSegmentType r) { return InfraPlacement_KWhPerYear[r] / UnitMath.Max(new(1), KWhPerYear); }
@@ -771,12 +775,12 @@ namespace ScoreInfrastructurePlan
                 public TonKilometersPerYear TonKilometers = new(0);
             }
 
-            public Dictionary<ChargingStrategy, YearlyChargingStrategyStats> ChargingStrategies = new ();
+            public Dictionary<ChargingStrategy, YearlyChargingStrategyStats> ChargingStrategies = new();
 
             public float ChargingStrategy_routes_ratio(ChargingStrategy c) { return ChargingStrategies[c].RoutesCount / (float)Math.Max(1, ChargingStrategies.Sum(n => n.Value.RoutesCount)); }
             public float ChargingStrategy_km_ratio(ChargingStrategy c) { return ChargingStrategies[c].Kilometers.Val / (float)Math.Max(1, ChargingStrategies.Sum(n => n.Value.Kilometers.Val)); }
             public float ChargingStrategy_tonkm_ratio(ChargingStrategy c) { return ChargingStrategies[c].TonKilometers.Val / (float)Math.Max(1, ChargingStrategies.Sum(n => n.Value.TonKilometers.Val)); }
-            
+
             public YearlyAggregateStats(string scenarioName, ModelYear modelYear)
             {
                 ScenarioName = scenarioName;
@@ -899,13 +903,13 @@ namespace ScoreInfrastructurePlan
 
             public override string ToString()
             {
-                var items = new List<object> { 
+                var items = new List<object> {
                     ScenarioName, ModelYear,
-                    ICEV_CO2_ton_per_y + BEV_CO2_ton_per_y, ICEV_CO2_ton_per_y, BEV_CO2_ton_per_y, 
+                    ICEV_CO2_ton_per_y + BEV_CO2_ton_per_y, ICEV_CO2_ton_per_y, BEV_CO2_ton_per_y,
                     ICEV_total_epy + BEV_total_epy_excl_infra + BEV_infrastructure_epy,
                     ICEV_total_epy, ICEV_vehicles_epy, ICEV_interest_epy, ICEV_fuel_epy, ICEV_driver_epy, ICEV_co2t_epy, ICEV_co2i_epy, ICEV_roadAndPollutionTax_epy, ICEV_fossil_fuel_liter_per_y, ICEV_renewable_fuel_liter_per_y,
                     BEV_total_epy_excl_infra + BEV_infrastructure_epy, BEV_vehicles_epy, BEV_batteries_epy, BEV_pickup_epy, BEV_interest_epy, BEV_electricity_epy, BEV_infrastructure_epy, BEV_driver_epy, BEV_co2t_epy, BEV_co2i_epy, BEV_roadAndPollutionTax_epy,
-                    BatteryWear_kWhPerYear, BatteryWear_kWhPerKWh, 
+                    BatteryWear_kWhPerYear, BatteryWear_kWhPerKWh,
                     ICEV_km_per_year, BEV_km_per_year, BEV_km_ratio, ICEV_tonkm_per_year, BEV_tonkm_per_year, BEV_tonkm_ratio,
                     ERS_km};
                 foreach (RouteSegmentType pl in Enum.GetValues(typeof(RouteSegmentType)))
