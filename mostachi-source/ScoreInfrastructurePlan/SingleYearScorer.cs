@@ -39,7 +39,8 @@ namespace ScoreInfrastructurePlan
                     = new ConcurrentDictionary<RouteSegment, (KiloWatts, KiloWatts, KiloWattHoursPerYear, Dimensionless, OtherUnit)>();
                 RouteVehicleTypeBehavior routeTraversals = new RouteVehicleTypeBehavior();
 
-                float subsampleFrequency = hasConverged & !onlyPrecomputeCostsUntilConvergence ? 1 : infraCostSubSampleFq;
+                //There used to be subsampling here, to speed up the simulation. It generally works for ERS and RestStops, but not for Depots and Destinations, which may not get any traffic at all.
+                float subsampleFrequency = 1; //hasConverged & !onlyPrecomputeCostsUntilConvergence ? 1 : infraCostSubSampleFq;
 
                 Console.WriteLine("\nStarting a new iteration");
                 int routeCounter = 0;
@@ -52,7 +53,7 @@ namespace ScoreInfrastructurePlan
                     if (Hashes.UniformHash((uint)route_vt.Route.ID) > subsampleFrequency)
                         return;
 
-                    var routeResult = FindCheapestWayToTraverseRoute(year, route_vt, scenario);
+                    var routeResult = FindCheapestWayToTraverseRoute(year, route_vt, scenario, inheritedSitePeakPower_kW);
                     routeTraversals[route_vt] = routeResult;
                     IncrementInfraUse(infraUsePerSegment, routeResult.costPerKm.InfraUsePerTraversal, route_vt.GetTotalTripCountPerYear(year) * (routeResult.costPerKm.TripCountMultiplier / new Dimensionless(subsampleFrequency)));
                 });
@@ -193,17 +194,23 @@ namespace ScoreInfrastructurePlan
 
             //Look for segments with exceptionally high cost per kWh
 
-            var OUTLIER_THRESHOLD = new Dimensionless(4);
+            var OUTLIER_THRESHOLD = new Dimensionless(5);
             HashSet<RouteSegment> outliers = new HashSet<RouteSegment>();
             foreach (RouteSegmentType t in Enum.GetValues(typeof(RouteSegmentType)))
             {
                 var segments = t == RouteSegmentType.Road ? builtErs : builtStaticCharging.Where(n => n.Key.Type == t);
+                if (!segments.Any())
+                    continue;
 
                 EuroPerYear totalInfraCost = new EuroPerYear(segments.Where(n => n.Key.Type == t).Sum(n => n.Value.Cost_EuroPerYear.Val));
                 KiloWattHoursPerYear totalEnergy = new KiloWattHoursPerYear(segments.Where(n => n.Key.Type == t).Sum(n => n.Value.EnergyDelivered_kWhPerYear.Val));
                 EuroPerKiloWattHour costThreshold = (totalInfraCost / totalEnergy) * OUTLIER_THRESHOLD;
+                Dimensionless utilizationThreshold = segments.Average(n => n.Value.UtilizationRate.Val) / OUTLIER_THRESHOLD;
 
-                outliers.UnionWith(segments.Where(n => n.Value.Cost_EuroPerkWh > costThreshold).Select(n => n.Key));
+                var hits = segments.Where(n => n.Value.Cost_EuroPerkWh > costThreshold && n.Value.UtilizationRate < utilizationThreshold).ToList();
+                outliers.UnionWith(hits.Select(n => n.Key));
+
+                //Console.WriteLine(hits.Where(n => inheritedSegmentPeakPower_kW.ContainsKey(n.Key)).Count() + " of " + hits.Count() + " blacklisted " + t + " were inherited.");
             }
 
             #endregion
@@ -214,7 +221,8 @@ namespace ScoreInfrastructurePlan
         public static (ChargingStrategy chargingStrategy, KiloWattHours netBatteryCapacity_kWh, RouteCost costPerKm) FindCheapestWayToTraverseRoute(
             ModelYear year,
             Route_VehicleType route_vt,
-            Scenario scenario)
+            Scenario scenario,
+            Dictionary<RouteSegment, (KiloWatts kW_segment, KiloWattsPerKilometer kW_perLaneKm)> inheritedSitePeakPower_kW) //TODO: This parameter should be removed, it is only included for debugging
         {
             //Calculate costs associated with this route-vehicle type combination, in EURO PER YEAR
             // Held constant:
@@ -233,8 +241,8 @@ namespace ScoreInfrastructurePlan
             //Modes with ERS, with pickup
             //Modes without ERS, without pickup
 
-            (ChargingStrategy strategy, KiloWattHours netBatteryCapacity_kWh, EuroPerYear haulierCostPerRouteYear, RouteCost routeCost)
-                bestStrategy = (ChargingStrategy.NA_Diesel, new KiloWattHours(float.MaxValue), new EuroPerYear(float.MaxValue), new RouteCost());
+            (ChargingStrategy strategy, KiloWattHours netBatteryCapacity_kWh, EuroPerYear haulierCostPerRouteYear, RouteCost routeCost, Dimensionless penalty)
+                bestStrategy = (ChargingStrategy.NA_Diesel, new KiloWattHours(float.MaxValue), new EuroPerYear(float.MaxValue), new RouteCost(), new Dimensionless(1));
 
             if (Parameters.VERBOSE) Console.WriteLine("Strat\tBat\t" + RouteCost.ToStringHeader);
 
@@ -254,15 +262,16 @@ namespace ScoreInfrastructurePlan
                     if (Parameters.VERBOSE) Console.WriteLine(chargingStrategy + "\t" + netBatteryCapacity_kWh + "\t" + routeCost.ToString());
 
                     var haulierCost = routeCost.HaulierCost_euroPerYear;
+                    var penalty = 1 + (chargingStrategy == ChargingStrategy.NA_Diesel ? new Dimensionless(0) : Parameters.World.Economy_Logistic_BEV_penalty_percent[year]);
 
                     allOptions.Add((chargingStrategy, netBatteryCapacity_kWh, haulierCost, routeCost));
 
-                    if (haulierCost < bestStrategy.haulierCostPerRouteYear)
+                    if (haulierCost * penalty < bestStrategy.haulierCostPerRouteYear * bestStrategy.penalty)
                     {
                         if (chargingStrategy.UsesDepot() && !routeCost.UsedChargerTypes.Contains(RouteSegmentType.Depot))
-                            bestStrategy = (chargingStrategy.GetWithoutDepot(), netBatteryCapacity_kWh, haulierCost, routeCost);
+                            bestStrategy = (chargingStrategy.GetWithoutDepot(), netBatteryCapacity_kWh, haulierCost, routeCost, penalty);
                         else
-                            bestStrategy = (chargingStrategy, netBatteryCapacity_kWh, haulierCost, routeCost);
+                            bestStrategy = (chargingStrategy, netBatteryCapacity_kWh, haulierCost, routeCost, penalty);
                     }
 
                     //No need to try different battery sizes with diesel
@@ -270,9 +279,6 @@ namespace ScoreInfrastructurePlan
                         break;
                 }
             }
-
-            //if (bestStrategy.strategy == ChargingStrategy.NA_Diesel)
-            //    Console.Write(allOptions.Count);
 
             return (bestStrategy.strategy, bestStrategy.netBatteryCapacity_kWh, bestStrategy.routeCost);
         }
@@ -345,12 +351,12 @@ namespace ScoreInfrastructurePlan
                 //Calculate how long it takes for the battery to reach the reference EoL
                 //TODO: I think there should be some special handling here of days without driving
                 var annualCalendarAgeing = new OtherUnit(365 * 24 * tcost.BatteryAgeing_Calendar_RatioOfReferenceLifetime.Val / tcost.Traversal_h_Total.Val);
-                var annualCycleAgeing = new OtherUnit(vt.Common_Annual_distance_km[year].Val * tcost.BatteryAgeing_Cycling_RatioOfLifetime.Val / route_length_km.Val);
+                var annualCycleAgeing = new OtherUnit(single_vehicle_km_per_year.Val * tcost.BatteryAgeing_Cycling_RatioOfLifetime.Val / route_length_km.Val);
                 var yearsToRefEolThreshold = new Years(1 / (annualCalendarAgeing.Val + annualCycleAgeing.Val));
 
                 var refLossAtEoL = (1 - Parameters.Battery.Net_End_of_life_definition_ratio_of_net[year]);
                 var annualLoss_ratioOfNet = new OtherUnit(refLossAtEoL.Val * (annualCalendarAgeing.Val + annualCycleAgeing.Val));
-                var tripsPerYear = new OtherUnit(vt.Common_Annual_distance_km[year].Val / route_length_km.Val);
+                var tripsPerYear = new OtherUnit(single_vehicle_km_per_year.Val / route_length_km.Val);
 
                 //Calculate how long the battery can be used if the lifetime is limited by minimum output power and minimum range
                 KiloWatts initialPower = netBatteryCapacity_kWh * Parameters.Battery.Net_Max_permitted_discharging_rate_c[year];
@@ -361,7 +367,7 @@ namespace ScoreInfrastructurePlan
                 //Even if this route isn't too demanding, assume that only 20% (ref) of initial range can be lost. The battery size was motivated by some other route.
                 lossWhenUnusableByVehicle_ratioOfNet = UnitMath.Min(lossWhenUnusableByVehicle_ratioOfNet, Parameters.Battery.Net_End_of_life_definition_ratio_of_net[year]);
 
-                var maxUsableLifetimeInVehicle_years = yearsToRefEolThreshold * (lossWhenUnusableByVehicle_ratioOfNet / refLossAtEoL);
+                var maxUsableLifetimeInVehicle_years = yearsToRefEolThreshold * (1 - lossWhenUnusableByVehicle_ratioOfNet) / refLossAtEoL;
 
                 var vehicleLifetime_years = vt.BEV_Lifetime_years[year];
                 var lifetimeInVehicle_years = UnitMath.Min(vehicleLifetime_years, maxUsableLifetimeInVehicle_years);
@@ -372,7 +378,7 @@ namespace ScoreInfrastructurePlan
                 //Calculate the residual value at EoL in the vehicle
                 Dimensionless residualValue_ratio = GetResidualBatteryValue_RatioOfNetPurchasePrice(year, lifetimeInVehicle_years, 1-lossAtEoLInVehicle_ratioOfNet);
 
-                Kilometers batteryLifetimeInVehicle_km = vt.Common_Annual_distance_km[year] * lifetimeInVehicle_years;
+                Kilometers batteryLifetimeInVehicle_km = single_vehicle_km_per_year * lifetimeInVehicle_years;
 
                 //TODO: This line effectively assumes that all future battery replacements have the same cost as the initial battery. In reality, replacement batteries may cost less.
                 EuroPerKilometer batteryAgeing_euroPerKm =  Parameters.Battery.Net_Pack_cost_euro_per_kWh[year] * netBatteryCapacity_kWh * (1 - residualValue_ratio) / batteryLifetimeInVehicle_km;
@@ -445,7 +451,7 @@ namespace ScoreInfrastructurePlan
             return costPerKm;
         }
 
-        public static (bool success, KiloWattHours minChargeAlongRoute_kWh, CostPerRouteTraversal cost, Dictionary<RouteSegment, (KiloWatts kW, Hours h, KiloWattHours kWh, Kilometers km, Dimensionless soc)> infraUse_perTraversal) GetRouteTraversalCost_perTraversal(
+        public static (bool success, KiloWattHours minChargeAlongRoute_kWh, CostPerRouteTraversal cost, Dictionary<RouteSegment, (KiloWatts kW, Hours h, KiloWattHours kWh, KiloWattHours kWh_potential, Kilometers km, Dimensionless soc)> infraUse_perTraversal) GetRouteTraversalCost_perTraversal(
             ModelYear year,
             Route_VehicleType route,
             InfraOffers infraOffers,
@@ -460,7 +466,7 @@ namespace ScoreInfrastructurePlan
             //if (!includesRestArea && chargingStrat.IsMultistopStrategy() && route.Route.SegmentSequence.Last().ChargingOfferedFromYear > year)
             //    return (false, 0, null, null);
 
-            var infraUse_perTraversal = new Dictionary<RouteSegment, (KiloWatts kW, Hours h, KiloWattHours kWh, Kilometers km, Dimensionless SoC)>();
+            var infraUse_perTraversal = new Dictionary<RouteSegment, (KiloWatts kW, Hours h, KiloWattHours kWh, KiloWattHours kWh_potential, Kilometers km, Dimensionless SoC)>();
 
             //If the vehicle runs on diesel, return diesel consumption and default traversal time
             if (chargingStrat == ChargingStrategy.NA_Diesel)
@@ -528,7 +534,7 @@ namespace ScoreInfrastructurePlan
                 {
                     //TODO: Figure out how one route can traverse the same segment more than once.
                     Dimensionless SoCOnArrival = (currentCharge_kWh - step.delta_kWh) / netBatteryCapacity_kWh;
-                    infraUse_perTraversal.TryAdd(segment, (step.infra_kW, step.cost.Traversal_h_Total, step.cost.ElectricityPurchased_kWh, segment.LengthToTraverseOneWay_km, SoCOnArrival));
+                    infraUse_perTraversal.TryAdd(segment, (step.infra_kW, step.cost.Traversal_h_Total, step.cost.ElectricityPurchased_kWh, step.cost.ElectricityPurchasePotential_kWh, segment.LengthToTraverseOneWay_km, SoCOnArrival));
                 }
             }
 
@@ -537,11 +543,22 @@ namespace ScoreInfrastructurePlan
             KiloWattHoursPerKilometer kWhPerKm = route.VehicleType.GetEnergyConsumption_kWh_per_km(year, netBatteryCapacity_kWh, chargingStrat.HasErsPickup());
             KiloWattHours kWhSpentPerTraversal = kWhPerKm * route.Route.Length_km;
             KiloWattHours bufferKWh = kWhPerKm * route.VehicleType.BEV_Min_range_buffer_km[year];
-            bool tripNeedsMoreThanHalfBattery = kWhSpentPerTraversal * new Dimensionless(2) > (netBatteryCapacity_kWh - bufferKWh);
+            
+            //The route is OK if the vehicle can return and charge along the way.
+            var chargingAlongRoute_kWh = new KiloWattHours(infraUse_perTraversal.Where(n => n.Key != route.Route.SegmentSequence.First() && n.Key != route.Route.SegmentSequence.Last()).Sum(n => n.Value.kWh_potential.Val));
+            bool canReturn = currentCharge_kWh + chargingAlongRoute_kWh > kWhSpentPerTraversal + bufferKWh;
+
+            //TODO: For short routes without access to charging, the vehicle can be assumed to charge along some other route
+            //But where do we assume the vehicle charges, and how much does it cost?
+            //bool battery
+
+            //bool roundTripNeedsMoreThanHalfBattery = kWhSpentPerTraversal * new Dimensionless(2f) > (netBatteryCapacity_kWh - bufferKWh) * new Dimensionless(0.5f);
             Dimensionless gainToSpendRatio = cumulativeCost.ElectricityPurchased_kWh / kWhSpentPerTraversal;
-            //TODO: For short routes without depot or destination charging available and which don't travel much on ERS, there is no way to charge. 
-            //      It seems realistic to assume that the vehicle would charge on another route. 
-            if (gainToSpendRatio < 0.75f || (tripNeedsMoreThanHalfBattery && gainToSpendRatio < 1)) //TODO: Is this threshold of 0.75 good? 
+            bool routePassesAnyCharging = route.Route.SegmentSequence.Where(n => n.ChargingOfferedFromYear <= year).Any();
+
+            //if (gainToSpendRatio < 0.75f || (tripNeedsMoreThanHalfBattery && gainToSpendRatio < 1)) //TODO: Is this threshold of 0.75 good? 
+            //if (!canReturn || (gainToSpendRatio < 1f && !routePassesAnyCharging))
+            if (!canReturn || gainToSpendRatio < .75f)
             {
                 return (false, new KiloWattHours(0), null, null); //this route does not provide sufficient charging
             }
@@ -552,7 +569,7 @@ namespace ScoreInfrastructurePlan
             {
                 var item = infraUse_perTraversal[key];
                 //Normalization (to make the sums match) can result in power draw greater than what is supplied by the infrastructure. So be it.
-                infraUse_perTraversal[key] = (item.kW * normCost.scaleFactor, item.h, item.kWh * normCost.scaleFactor, item.km, item.SoC);
+                infraUse_perTraversal[key] = (item.kW * normCost.scaleFactor, item.h, item.kWh * normCost.scaleFactor, item.kWh_potential, item.km, item.SoC);
             }
 
             return (true, minChargeAlongRoute_kWh, normCost.cost, infraUse_perTraversal);
@@ -585,8 +602,9 @@ namespace ScoreInfrastructurePlan
                 Traversal_h_Abroad = inSweden ? new Hours(0) : flows.dwellTime_h,
                 Traversal_h_InSweden = inSweden ? flows.dwellTime_h : new Hours(0),
                 OfWhichIsDelay_h = flows.ofWhichIsDelay_h,
-                ElectricityPurchased_Euro = Parameters.GetMeanElectricityPrice(year, segment.Type, segment.Region) * flows.energyPurchased_kWh,
+                ElectricityPurchased_Euro = Parameters.GetMeanElectricityPrice_inclGridFee(year, segment.Type, segment.Region) * flows.energyPurchased_kWh,
                 ElectricityPurchased_kWh = flows.energyPurchased_kWh,
+                ElectricityPurchasePotential_kWh = flows.maxChargingPotential_kWh,
                 CO2_kg = Parameters.GetCO2_kgPerkWh(year, segment.Region) * flows.energyPurchased_kWh,
                 InfraFees_euro_approximate = flows.infraFees_euro,
             };
@@ -623,7 +641,7 @@ namespace ScoreInfrastructurePlan
             //return (1 - valueLossAtReferenceEoLSoH_ratio * spentUsefulLife_ratio) * newPriceAtEol_ratio;
         }
 
-        public static (Hours dwellTime_h, Hours chargingTime_h, Hours ofWhichIsDelay_h, KiloWatts discharging_kW, KiloWatts charging_kW, KiloWattHours discharging_kWh, KiloWattHours charging_kWh, CRate netDischargingCRate, CRate netChargingCRate, KiloWatts totalPowerDraw_kW, KiloWattHours energyPurchased_kWh, Euro infraFees_euro)
+        public static (Hours dwellTime_h, Hours chargingTime_h, Hours ofWhichIsDelay_h, KiloWatts discharging_kW, KiloWatts charging_kW, KiloWattHours discharging_kWh, KiloWattHours charging_kWh, KiloWattHours maxChargingPotential_kWh, CRate netDischargingCRate, CRate netChargingCRate, KiloWatts totalPowerDraw_kW, KiloWattHours energyPurchased_kWh, Euro infraFees_euro)
             GetEnergyFlows(
             KiloWattHours netBatterySoc_Kwh,
             bool segmentIsPlannedStop,
@@ -648,7 +666,8 @@ namespace ScoreInfrastructurePlan
                 && !(segmentIsPlannedStop && segment.Type == RouteSegmentType.Road); //Some strategies allow rest stops along roads
             //No, we only discharge
             if (minDwellTime_h == 0 || !(wantToChargeHere != ChargingMode.None && canChargeHere))
-                return (minDwellTime_h, new Hours(0), new Hours(0), powerConsumption_kW, new KiloWatts(0), powerConsumption_kW * minDwellTime_h, new KiloWattHours(0), powerConsumption_kW / netBatteryCapacity_kWh, new CRate(0), new KiloWatts(0), new KiloWattHours(0), new Euro(0));
+                return (minDwellTime_h, new Hours(0), new Hours(0), powerConsumption_kW, new KiloWatts(0), powerConsumption_kW * minDwellTime_h, new KiloWattHours(0), new KiloWattHours(0), 
+                    powerConsumption_kW / netBatteryCapacity_kWh, new CRate(0), new KiloWatts(0), new KiloWattHours(0), new Euro(0));
 
             //Yes, we want to and can charge here
             KiloWatts availablePowerFromInfra_kW = infra.AvailablePowerPerUser_kW[segment.Type];
@@ -687,7 +706,11 @@ namespace ScoreInfrastructurePlan
                 infraFees_euro = feePerkWh * energyPurchased_kWh;
             }
 
-            return (actualDwellTime_h, chargingTime_h, ofWhichIsDelay_h, discharging_kW, charging_kW, discharging_kWh, charging_kWh, netDischargingCRate, netChargingCRate, totalPowerDraw_kW, energyPurchased_kWh, infraFees_euro);
+            var maxChargingPotential_kWh = availableForCharging_kW * chargingTime_h;
+            if (segment.Type == RouteSegmentType.Depot || segment.Type == RouteSegmentType.Destination)
+                maxChargingPotential_kWh = energyPurchased_kWh;
+
+            return (actualDwellTime_h, chargingTime_h, ofWhichIsDelay_h, discharging_kW, charging_kW, discharging_kWh, charging_kWh, maxChargingPotential_kWh, netDischargingCRate, netChargingCRate, totalPowerDraw_kW, energyPurchased_kWh, infraFees_euro);
         }
 
         private static (HashSet<int>, bool includesRestArea) FindPlannedStops(ModelYear year, Route_VehicleType route, ChargingStrategy chargingStrat)
@@ -783,7 +806,7 @@ namespace ScoreInfrastructurePlan
 
         private static void IncrementInfraUse(
             ConcurrentDictionary<RouteSegment, (KiloWatts meankW, KiloWatts maxSingleVehiclePeakKW, KiloWattHoursPerYear kWhPerYear, Dimensionless socOnArrival, OtherUnit aadt)> infraUsePerSegment,
-            Dictionary<RouteSegment, (KiloWatts kW, Hours h, KiloWattHours kWh, Kilometers km, Dimensionless socOnArrival)> infraUsePerTraversal,
+            Dictionary<RouteSegment, (KiloWatts kW, Hours h, KiloWattHours kWh, KiloWattHours kWh_potential, Kilometers km, Dimensionless socOnArrival)> infraUsePerTraversal,
             OtherUnit totalTripCountPerYear)
         {
             if (infraUsePerTraversal is null)
@@ -791,7 +814,7 @@ namespace ScoreInfrastructurePlan
 
             foreach (var infra in infraUsePerTraversal)
             {
-                (var kW, var h, var kWh, var km, var socOnArrival) = infra.Value;
+                (var kW, var h, var kWh, var kWh_potential, var km, var socOnArrival) = infra.Value;
                 var mean_kW = kW * new Dimensionless(h.Val * totalTripCountPerYear.Val / (24 * 365)); //For ERS, this is mean kW per segment (h_per_segment * vehicles_per_year / hours_per_year => vehicles_per_segment)
                 var kWhPerYear = new KiloWattHoursPerYear(kWh.Val * totalTripCountPerYear.Val);
                 OtherUnit route_aadt = new OtherUnit(totalTripCountPerYear.Val / 365);

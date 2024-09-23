@@ -19,6 +19,7 @@ namespace ScoreInfrastructurePlan
         public EuroPerKiloWattHour Cost_EuroPerkWh { get { return (EnergyDelivered_kWhPerYear is null) ? new(0) : new (Cost_EuroPerYear.Val / Math.Max(1, EnergyDelivered_kWhPerYear.Val)); } }
         public Dimensionless MeanSocOnArrival { get; set; }
         public bool PeakPowerIsGreaterThanInherited { get; set; }
+        public Dimensionless UtilizationRate { get { return EnergyDelivered_kWhPerYear / new KiloWattHoursPerYear(InstalledPower_kWPeak_Segment.Val * 24 * 365); } }
     }
 
     //class BuiltInfrastructureSet : Dictionary<int, ChargingSiteCost> {    }
@@ -219,19 +220,16 @@ namespace ScoreInfrastructurePlan
                 + gridCable_euro;
             Dimensionless interest_ratio_total = new Dimensionless(1 + interest_ratioPerYear.Val * writeOff_years.Val / 2);
             EuroPerYear capex_euroPerYear = (hw_euro + grid_euro) * interest_ratio_total / writeOff_years;
-            EuroPerKiloWattHour opex_euroPerkWh = inf.Grid_fee_at_100_percent_utilization_euro_per_kWh[year] * (1 / util_ratio);
-            EuroPerYear opex_euroPerYear = new EuroPerYear(opex_euroPerkWh.Val * realisticKWhPerYear.Val);
 
             if (rescale)
             {
                 Dimensionless scaling = kWhPerYear / (realisticKWhPerYear * threshold);
                 capex_euroPerYear *= scaling;
-                opex_euroPerYear *= scaling;
             }
 
             return new ChargingSiteCost()
             {
-                Cost_EuroPerYear = (opex_euroPerYear + capex_euroPerYear) * (1 + profitMargin_ratio),
+                Cost_EuroPerYear = capex_euroPerYear * (1 + profitMargin_ratio),
                 EnergyDelivered_kWhPerYear = kWhPerYear,
                 InstalledPower_kWPeak_Segment = sitekW,
                 UsedPower_kWPeak_Segment = peakDraw_sitekW,
@@ -244,7 +242,11 @@ namespace ScoreInfrastructurePlan
 
         public static EuroPerKiloWattHour GetErsUserFee_CachedOrEstimated_excl_energy(ModelYear year, InfraOffers infra)
         {
-            if (_ersUserCost_excl_energy.TryGetValue(year, out var ersCost))
+            if (Parameters.HasErsChargeOverride)
+            {
+                return Parameters.Ers_UserChargeOverride_ExcludingEnergyAndGridFeesAndTaxes[year];
+            }
+            else if (_ersUserCost_excl_energy.TryGetValue(year, out var ersCost))
             {
                 return ersCost;
             }
@@ -272,13 +274,12 @@ namespace ScoreInfrastructurePlan
                 + inf.Grid_initial_acccess_euro_per_kW[year] * peakPower_kWPerBidirectionalKm * inf.ERS_grid_connection_interval_km[year]
                 + inf.ERS_grid_connection_cable_euro[year];
             EuroPerKilometer grid_euroPerKm = grid_euroPerConnection / inf.ERS_grid_connection_interval_km[year];
-            EuroPerKiloWattHour grid_euroPerKWh = inf.Grid_fee_at_100_percent_utilization_euro_per_kWh[year] * (1 / inf.ERS_utilization_ratio[year]);
 
             Dimensionless interest_ratio_lifetime = new Dimensionless(World.Economy_Public_sector_interest_rate_percent[year].Val * writeoff_years.Val / 2); //Loan is paid off and shrinks linearly over writeoff time
             EuroPerKilometerYear capex_euroPerYear = (hw_euroPerKm + grid_euroPerKm) * (1 + interest_ratio_lifetime) / writeoff_years;
             Dimensionless margin = 1 + Parameters.Infrastructure.ERS_profit_margin_ratio[year];
 
-            return (capex_euroPerYear + grid_euroPerKWh * kWh_per_bidirectional_kmYear) * margin;
+            return capex_euroPerYear * margin;
         }
 
         public static EuroPerKiloWattHour Calculate_ERS_euro_per_kWh(ModelYear year, KiloWatts meanDraw_kWPerVehicle, KiloWattsPerKilometer alreadyInstalled_kWPerKm, float speed_kmph = 85f, OtherUnit aadt = null)

@@ -271,6 +271,11 @@ namespace Commons
 
         public static IEnumerable<(int routeID, short vehicleTypeID, float annualMovementsLoad, float annualMovementsEmpty, float annualTonnes)> ReadRouteVehicleTypes(string routeVehicleTypePath, string? routeClassPath = null, Dictionary<int, float>? routeClassWeights = null)
         {
+            if (routeClassWeights != null)
+            {
+                Console.WriteLine("NOTE: Traffic volumes are being rescaled based on custom weighting (route class weights)");
+            }
+
             if (USE_CACHING && _cache.HasData(routeVehicleTypePath))
             {
                 foreach (var item in _cache.Get<(int routeID, short vehicleTypeID, float annualMovementsLoad, float annualMovementsEmpty, float annualTonnes)>(routeVehicleTypePath))
@@ -306,7 +311,7 @@ namespace Commons
             }
         }
 
-        public static IEnumerable<(int clusterID, long fromNodeID, long toNodeID, float distance_m, float speed_kmph, (long fromNodeID, long toNodeID)[] nodeSequence)> ReadClusters(string path)
+        public static IEnumerable<(int clusterID, long fromNodeID, long toNodeID, float distance_m, float speed_kmph, (long fromNodeID, long toNodeID)[] nodeSequence)> ReadClusterNodes(string path)
         {
             if (USE_CACHING && _cache.HasData(path))
             {
@@ -397,7 +402,16 @@ namespace Commons
                 while ((line = r.ReadLine()) != null)
                 {
                     string[] parts = line.Split('\t');
-                    var coord = (double.Parse(parts[0]), double.Parse(parts[1]));
+                    (double, double) coord;
+                    try
+                    {
+                        coord = (double.Parse(parts[0]), double.Parse(parts[1]));
+                    }
+                    catch (Exception)
+                    {
+                        Console.WriteLine("Failed to parse \"" + line + "\" in " + path);
+                        throw;
+                    }
                     if (!swedenOnly || IsInSweden(coord.Item1, coord.Item2))
                         yield return coord;
                 }

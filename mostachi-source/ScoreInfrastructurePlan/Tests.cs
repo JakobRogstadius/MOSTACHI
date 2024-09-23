@@ -173,7 +173,7 @@ namespace ScoreInfrastructurePlan
                 ChargingStrategies = new List<ChargingStrategy>() { ChargingStrategy.AllPlannedStopsAndErs } //(Enum.GetValues(typeof(ChargingStrategy)).OfType<ChargingStrategy>())
             };
 
-            var score = SingleYearScorer.FindCheapestWayToTraverseRoute(year, rvpair, scenario);
+            var score = SingleYearScorer.FindCheapestWayToTraverseRoute(year, rvpair, scenario, new Dictionary<RouteSegment, (KiloWatts kW_segment, KiloWattsPerKilometer kW_perLaneKm)>());
             var c = score.costPerKm;
             var vals1 = new object[] { s, score.netBatteryCapacity_kWh, score.chargingStrategy };
             Console.WriteLine(string.Join("\t", vals1));

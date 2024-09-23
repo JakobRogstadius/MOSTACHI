@@ -20,7 +20,7 @@ namespace ScoreInfrastructurePlan
         //     Number of vehicles (total operating time)
 
         public bool RouteIsElectrified { get; set; }
-        public Dictionary<RouteSegment, (KiloWatts kW, Hours h, KiloWattHours kWh, Kilometers km, Dimensionless socOnArrival)> InfraUsePerTraversal { get; } = new Dictionary<RouteSegment, (KiloWatts kW, Hours h, KiloWattHours kWh, Kilometers km, Dimensionless socOnArrival)>();
+        public Dictionary<RouteSegment, (KiloWatts kW, Hours h, KiloWattHours kWh, KiloWattHours kWh_potential, Kilometers km, Dimensionless socOnArrival)> InfraUsePerTraversal { get; } = new ();
         public Dimensionless RatioOfOperationInSweden { get; set; } = new Dimensionless(1);
         public KilometersPerYear TotalAnnualRouteKm { get; set; } = new KilometersPerYear(float.MaxValue);
         public KilometersPerYear TotalAnnualRouteKmInSweden { get { return TotalAnnualRouteKm * RatioOfOperationInSweden; } }

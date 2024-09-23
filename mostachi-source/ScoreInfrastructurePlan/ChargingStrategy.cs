@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace ScoreInfrastructurePlan
 {
-    enum ChargingStrategy
+    public enum ChargingStrategy
     {
         NA_Diesel = 0,
         Depot = 1, //Electricity is cheapest at night
@@ -18,14 +18,14 @@ namespace ScoreInfrastructurePlan
         PublicStaticCharging = 9
     }
 
-    enum ChargingMode
+    public enum ChargingMode
     {
         None = 0,
         Propulsion = 1,
         Charging = 2
     }
 
-    static class ChargingStrategyExtensions
+    public static class ChargingStrategyExtensions
     {
         public static ChargingMode ChargeIfPossible(this ChargingStrategy strategy, RouteSegmentType place, bool isPlannedRestStop, Dimensionless soc)
         {

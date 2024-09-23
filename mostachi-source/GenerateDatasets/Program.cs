@@ -69,7 +69,7 @@ namespace GenerateDatasets
             //Length here is measured in number of grid cells, by default 1/25 degrees, or approximately 5-ish km.
             //Set this variable to null if you don't wish to use it.
             //TODO: Improve how this is handled. It should be a global setting somewhere.
-            var routeClassWeights = new Dictionary<int, float>() { { 1, 1.35f }, { 10, 1.3f }, { 20, 0.8f }, { 50, 2f }, { 100, 1.1f }, { 200, 2f }, { 500, 0.7f }, { 10000, 0f } };
+            Dictionary<int, float> routeClassWeights = null; // new Dictionary<int, float>() { { 1, 1.35f }, { 10, 1.3f }, { 20, 0.8f }, { 50, 2f }, { 100, 1.1f }, { 200, 2f }, { 500, 0.7f }, { 10000, 0f } };
 
             Console.WriteLine("Preprocessing data...");
             HashSet<long>
@@ -77,7 +77,7 @@ namespace GenerateDatasets
             Dictionary<long, (double lat, double lon, bool bidirectional)>
                 nodes = DataReader.ReadNodes(Paths.Nodes).ToDictionary(n => n.nodeID, m => (m.latitude, m.longitude, bidirectionalNodes.Contains(m.nodeID)));
             Dictionary<int, (double from_lat, double from_lon, double to_lat, double to_lon, double mid_lat, double mid_lon, bool bidirectional, float distance_m, float speed_kmph)>
-                clusters = DataReader.ReadClusters(Paths.ClusterNodePairs).ToDictionary(n => n.clusterID, m =>
+                clusters = DataReader.ReadClusterNodes(Paths.ClusterNodePairs).ToDictionary(n => n.clusterID, m =>
                 {
                     var c = GetCoordinates(m.fromNodeID, m.toNodeID, nodes);
                     return (c.from_lat, c.from_lon, c.to_lat, c.to_lon, c.mid_lat, c.mid_lon, c.bidirectional, m.distance_m, m.speed_kmph);
@@ -151,7 +151,7 @@ namespace GenerateDatasets
             const float oneKmLongitude = 0.015f; //0.008f is one km latitude
 
             //Add the bounding box of each road segment ("cluster") to an index
-            foreach (var cluster in DataReader.ReadClusters(clustersPath))
+            foreach (var cluster in DataReader.ReadClusterNodes(clustersPath))
             {
                 if (!mainClusters.Contains(cluster.clusterID))
                     continue;
@@ -249,7 +249,7 @@ namespace GenerateDatasets
             var rtree = new RTree.RTree<int>();
             const float oneKmLon = 0.015f, oneKmLat = 0.008f; //0.008f is one km latitude
 
-            foreach (var cluster in DataReader.ReadClusters(Paths.ClusterNodePairs))
+            foreach (var cluster in DataReader.ReadClusterNodes(Paths.ClusterNodePairs))
             {
                 var p1 = nodes[cluster.fromNodeID];
                 var p2 = nodes[cluster.toNodeID];
@@ -328,7 +328,7 @@ namespace GenerateDatasets
 
             Console.WriteLine("Mapping clusters to raster bins...");
             int latRes = 40, lonRes = 20;
-            var clusters = DataReader.ReadClusters(clustersPath)
+            var clusters = DataReader.ReadClusterNodes(clustersPath)
                 .ToDictionary(
                     c => c.clusterID,
                     c => c.nodeSequence.Select(n =>
@@ -420,7 +420,7 @@ namespace GenerateDatasets
 
             Console.WriteLine("Mapping clusters to raster bins...");
             int latRes = 40, lonRes = 20;
-            var clusters = DataReader.ReadClusters(clustersPath)
+            var clusters = DataReader.ReadClusterNodes(clustersPath)
                 .ToDictionary(
                     c => c.clusterID,
                     c => c.nodeSequence.Select(n =>
@@ -481,7 +481,7 @@ namespace GenerateDatasets
         }
 
         private static void GenerateAnnualMovementsVsAADTRasterCsv(
-            string clustersPath,
+            string clusterNodesPath,
             string clusterSeqPath,
             string aadtPath,
             string routeVehicleTypePath,
@@ -501,7 +501,7 @@ namespace GenerateDatasets
 
             Console.WriteLine("Mapping clusters to raster bins...");
             int latRes = 40, lonRes = 20;
-            var clusters = DataReader.ReadClusters(clustersPath)
+            var clusters = DataReader.ReadClusterNodes(clusterNodesPath)
                 .ToDictionary(
                     c => c.clusterID,
                     c => c.nodeSequence.Select(n =>
@@ -624,7 +624,7 @@ namespace GenerateDatasets
             ConcurrentDictionary<int, (float annualMovements, float annualTonnes)> sumPerCluster,
             Dictionary<long, (double lat, double lon)> nodes)
         {
-            (long nodeID, float aadtHeavy)[] aadtPerNode = DataReader.ReadClusters(clustersPath)
+            (long nodeID, float aadtHeavy)[] aadtPerNode = DataReader.ReadClusterNodes(clustersPath)
                 .SelectMany(n => n.nodeSequence.Select(m => (m.fromNodeID, sumPerCluster[n.clusterID])))
                 .GroupBy(n => n.fromNodeID)
                 .Select(n => (n.Key, n.Average(m => m.Item2.annualMovements) / 365))
@@ -637,7 +637,7 @@ namespace GenerateDatasets
             {
                 writer.WriteLine("node_id\taadt_heavy\tis_bidirectional\tlongitude\tlatitude\tdirection");
 
-                Parallel.ForEach(DataReader.ReadClusters(clustersPath), cluster =>
+                Parallel.ForEach(DataReader.ReadClusterNodes(clustersPath), cluster =>
                 {
                     double aadt = sumPerCluster[cluster.clusterID].annualMovements / 365;
                     var s = cluster.nodeSequence;
@@ -755,7 +755,8 @@ namespace GenerateDatasets
             Dictionary<int, (double from_lat, double from_lon, double to_lat, double to_lon, double mid_lat, double mid_lon, bool bidirectional, float distance_m, float speed_kmph)> clusters,
             List<int> startNodeIDs)
         {
-            var routeClassWeights = new Dictionary<int, float>() { { 1, 1.35f }, { 10, 1.3f }, { 20, 0.8f }, { 50, 2f }, { 100, 1.1f }, { 200, 2f }, { 500, 0.7f }, { 10000, 0f } };
+            //var routeClassWeights = new Dictionary<int, float>() { { 1, 1.35f }, { 10, 1.3f }, { 20, 0.8f }, { 50, 2f }, { 100, 1.1f }, { 200, 2f }, { 500, 0.7f }, { 10000, 0f } };
+            Dictionary<int, float> routeClassWeights = null;
 
             Console.WriteLine(1);
             //For each route, get the total number of annual vehicle passages
@@ -939,7 +940,7 @@ namespace GenerateDatasets
         static void CalculateClusterToGridMapping()
         {
             var nodes = DataReader.ReadNodes(Paths.Nodes).ToDictionary(n => n.nodeID, n => new CoordinateHash(n.latitude, n.longitude));
-            var clusterToWeightedGridCells = DataReader.ReadClusters(Paths.ClusterNodePairs).ToDictionary(n => n, n =>
+            var clusterToWeightedGridCells = DataReader.ReadClusterNodes(Paths.ClusterNodePairs).ToDictionary(n => n, n =>
             {
                 var latLonBinAndMeters = n.nodeSequence
                     .SelectMany(m => GetInterpolatedPoints(nodes[m.fromNodeID], nodes[m.toNodeID], 200))

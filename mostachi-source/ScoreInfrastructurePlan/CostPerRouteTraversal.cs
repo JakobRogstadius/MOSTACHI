@@ -9,6 +9,7 @@ namespace ScoreInfrastructurePlan
         public Dimensionless BatteryAgeing_Total_RatioOfReferenceLifetime { get { return BatteryAgeing_Calendar_RatioOfReferenceLifetime + BatteryAgeing_Cycling_RatioOfLifetime; } }
         public Euro ElectricityPurchased_Euro { get; set; } = new Euro(0);
         public KiloWattHours ElectricityPurchased_kWh { get; set; } = new KiloWattHours(0);
+        public KiloWattHours ElectricityPurchasePotential_kWh { get; set; } = new KiloWattHours(0);
         public Hours Traversal_h_Abroad { get; set; } = new Hours(0);
         public Hours Traversal_h_InSweden { get; set; } = new Hours(0);
         public Hours Traversal_h_Total { get { return Traversal_h_Abroad + Traversal_h_InSweden; } }
@@ -52,7 +53,7 @@ namespace ScoreInfrastructurePlan
                 BatteryAgeing_Cycling_RatioOfLifetime = this.BatteryAgeing_Cycling_RatioOfLifetime * r, //TODO: Technically, the wear would be different as the c-rate would be different
                 BatteryAgeing_Calendar_RatioOfReferenceLifetime = this.BatteryAgeing_Calendar_RatioOfReferenceLifetime, //unchanged
                 ElectricityPurchased_Euro = this.ElectricityPurchased_Euro * r,
-                ElectricityPurchased_kWh = total_kWh * r,
+                ElectricityPurchased_kWh = this.ElectricityPurchased_kWh * r,
                 Traversal_h_InSweden = this.Traversal_h_InSweden, //unchanged
                 Traversal_h_Abroad = this.Traversal_h_Abroad, //unchanged
                 OfWhichIsDelay_h = this.OfWhichIsDelay_h, //unchanged

@@ -70,6 +70,7 @@ namespace Commons
         public static readonly string Error = RootPaths.LogsRoot + "error.txt";
 
 
+        public static string ExperimentLogsDir = RootPaths.LogsRoot;
         public static string ExperimentLog = RootPaths.LogsRoot + "experiment_log_" + DateTime.Now.ToString("yyyy-MM-dd HH-mm").Replace(' ', '_') + ".txt";
         public static string RunLog = RootPaths.LogsRoot + "run_log_" + DateTime.Now.ToString("yyyy-MM-dd HH-mm").Replace(' ', '_') + ".txt";
 
@@ -77,6 +78,7 @@ namespace Commons
         {
             string s = experimentName.Replace(' ', '_');
             Directory.CreateDirectory(RootPaths.LogsRoot + s);
+            ExperimentLogsDir = RootPaths.LogsRoot + s + Path.DirectorySeparatorChar;
             ExperimentLog = RootPaths.LogsRoot + s + Path.DirectorySeparatorChar + "experiment_log_" + s + '_' + DateTime.Now.ToString("yyyy-MM-dd HH-mm").Replace(' ', '_') + ".txt";
         }
     }

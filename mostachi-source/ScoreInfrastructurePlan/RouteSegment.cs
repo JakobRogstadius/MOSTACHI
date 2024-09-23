@@ -14,7 +14,7 @@ namespace ScoreInfrastructurePlan
         }
     }
 
-    class RouteSegment
+    public class RouteSegment
     {
         //Most RouteSegment objects will represent what is elsewhere called a "cluster", i.e. a grouped sequence of
         //OSM ways. However, rest areas, depots and destinations are also represented as RouteSegments with length=0.

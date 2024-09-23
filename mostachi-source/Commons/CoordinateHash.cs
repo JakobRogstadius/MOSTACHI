@@ -108,5 +108,21 @@ namespace Commons
             var rut_id = (1000 * (int)(xy[1] / 1000.0)).ToString() + (1000 * (int)(xy[0] / 1000.0)).ToString();
             return (xy[0], xy[1], rut_id);
         }
+
+        public static int[] GetNeighbors(int hashID, int binsPerDegree = DEFAULT_BINS_PER_DEGREE)
+        {
+            int resolution = binsPerDegree * 360;
+            return new int[]
+            {
+                hashID - 1,
+                hashID + 1,
+                hashID + resolution,
+                hashID + resolution + 1,
+                hashID + resolution - 1,
+                hashID - resolution,
+                hashID - resolution + 1,
+                hashID - resolution - 1
+            };
+        }
     }
 }

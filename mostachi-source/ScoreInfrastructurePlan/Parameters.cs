@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Runtime.CompilerServices;
 using static ScoreInfrastructurePlan.Parameters;
 
 namespace ScoreInfrastructurePlan
@@ -25,6 +26,11 @@ namespace ScoreInfrastructurePlan
         public static string AsDateString(this ModelYear year)
         {
             return year.AsInteger() + "-01-01";
+        }
+
+        public static ModelYear FromDateString(string yearMonthDay)
+        {
+            return FromInteger(int.Parse(yearMonthDay.Substring(0, 4)));
         }
 
         public static ModelYear Next(this ModelYear year)
@@ -455,7 +461,7 @@ namespace ScoreInfrastructurePlan
         public static Dictionary<short, VehicleType> VehicleTypes { get; } = new Dictionary<short, VehicleType>() { { 102, MGV16 }, { 103, MGV24 }, { 104, HGV40 }, { 105, HGV60 } };
         public static readonly VehicleType[] VehicleTypesInOrder = new VehicleType[] { MGV16, MGV24, HGV40, HGV60 };
 
-        public static EuroPerKiloWattHour GetMeanElectricityPrice(ModelYear year, RouteSegmentType placement, ElectricityPriceRegion region)
+        public static EuroPerKiloWattHour GetMeanElectricityPrice_inclGridFee(ModelYear year, RouteSegmentType placement, ElectricityPriceRegion region)
         {
             EuroPerKiloWattHour priceLow, priceHigh;
             switch (region)
@@ -476,15 +482,26 @@ namespace ScoreInfrastructurePlan
                     throw new NotImplementedException();
             }
 
+            var utilRate = placement switch
+            {
+                RouteSegmentType.Depot => Infrastructure.Depot_utilization_ratio[year],
+                RouteSegmentType.Destination => Infrastructure.Destination_utilization_ratio[year],
+                RouteSegmentType.Road => Infrastructure.ERS_utilization_ratio[year],
+                RouteSegmentType.RestStop => Infrastructure.Rest_Stop_utilization_ratio[year],
+                _ => throw new NotImplementedException()
+            };
+
+            EuroPerKiloWattHour grid_euroPerKWh = Infrastructure.Grid_fee_at_10_percent_utilization_euro_per_kWh[year] / (10 * utilRate);
+
             var r = placement switch
             {
                 RouteSegmentType.Depot => Infrastructure.Depot_electricity_price_ratio[year],
                 RouteSegmentType.Destination => Infrastructure.Destination_electricity_price_ratio[year],
                 RouteSegmentType.Road => Infrastructure.ERS_electricity_price_ratio[year],
                 RouteSegmentType.RestStop => Infrastructure.Rest_Stop_electricity_price_ratio[year],
-                _ => throw new NotImplementedException(),
+                _ => throw new NotImplementedException()
             };
-            return priceHigh * r + priceLow * (1 - r);
+            return priceHigh * r + priceLow * (1 - r) + grid_euroPerKWh;
         }
 
         public static KilogramPerKiloWattHour GetCO2_kgPerkWh(ModelYear year, ElectricityPriceRegion region)
@@ -579,6 +596,25 @@ namespace ScoreInfrastructurePlan
             World.Diesel_Price_euro_per_liter.Set(dieselPrice);
             World.Diesel_Emissions_kg_CO2_per_liter.Set(co2Emissions);
             World.Diesel_CO2_tax_euro_per_liter.Set(co2Tax);
+        }
+
+        public static ParameterTimeSeries<EuroPerKiloWattHour> Ers_UserChargeOverride_ExcludingEnergyAndGridFeesAndTaxes { get; set; }
+            = new ParameterTimeSeries<EuroPerKiloWattHour>() { 
+                new EuroPerKiloWattHour(float.NaN), 
+                new EuroPerKiloWattHour(float.NaN), 
+                new EuroPerKiloWattHour(float.NaN), 
+                new EuroPerKiloWattHour(float.NaN), 
+                new EuroPerKiloWattHour(float.NaN), 
+                new EuroPerKiloWattHour(float.NaN), 
+                new EuroPerKiloWattHour(float.NaN) 
+            };
+
+        public static bool HasErsChargeOverride
+        {
+            get
+            {
+                return float.IsNormal(Ers_UserChargeOverride_ExcludingEnergyAndGridFeesAndTaxes[0].Val);
+            }
         }
     }
 }
