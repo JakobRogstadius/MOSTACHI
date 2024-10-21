@@ -21,11 +21,11 @@ namespace ScoreInfrastructurePlan
 
         public bool RouteIsElectrified { get; set; }
         public Dictionary<RouteSegment, (KiloWatts kW, Hours h, KiloWattHours kWh, KiloWattHours kWh_potential, Kilometers km, Dimensionless socOnArrival)> InfraUsePerTraversal { get; } = new ();
-        public Dimensionless RatioOfOperationInSweden { get; set; } = new Dimensionless(1);
+        public Dimensionless RatioOfOperatingDistanceInSweden { get; set; } = new Dimensionless(1);
         public KilometersPerYear TotalAnnualRouteKm { get; set; } = new KilometersPerYear(float.MaxValue);
-        public KilometersPerYear TotalAnnualRouteKmInSweden { get { return TotalAnnualRouteKm * RatioOfOperationInSweden; } }
+        public KilometersPerYear TotalAnnualRouteKmInSweden { get { return TotalAnnualRouteKm * RatioOfOperatingDistanceInSweden; } }
         public TonKilometersPerYear TotalAnnualRouteTonKm { get; set; } = new TonKilometersPerYear(float.MaxValue);
-        public TonKilometersPerYear TotalAnnualRouteTonKmInSweden { get { return TotalAnnualRouteTonKm * RatioOfOperationInSweden; } }
+        public TonKilometersPerYear TotalAnnualRouteTonKmInSweden { get { return TotalAnnualRouteTonKm * RatioOfOperatingDistanceInSweden; } }
         public EuroPerKilometer VehicleAgeing_euroPerKm { get; set; } = new EuroPerKilometer(float.MaxValue); //Includes maintenance
         EuroPerKilometer _wear = new EuroPerKilometer(float.MaxValue);
         public EuroPerKilometer BatteryAgeing_euroPerKm
@@ -111,7 +111,7 @@ namespace ScoreInfrastructurePlan
         //Haulier pays everywhere, regardless of location
         public EuroPerYear HaulierCost_euroPerYear { get { return HaulierCost_euroPerKm * TotalAnnualRouteKm; } }
 
-        public const string ToStringHeader = "system_cost_€_per_km\ttransport_cost_€_per_km\tdriver_€_per_km\tvehicle_€_per_km\tbattery_€_per_km\ters_pickup_€_per_km\tinterest_€_per_km\tenergy_€_per_km\tcharging_infra_€_per_km\troad_and_pollution_tax_€_per_km\tco2_total_€_per_km\tco2_taxed_€_per_km\tkm_in_sweden_per_y";
+        public const string ToStringHeader = "system_cost_€_per_km\ttransport_cost_€_per_km\tdriver_€_per_km\tvehicle_€_per_km\tbattery_€_per_km\ters_pickup_€_per_km\tinterest_€_per_km\tenergy_€_per_km\tcharging_infra_€_per_km\troad_and_pollution_tax_€_per_km\tco2_total_€_per_km\tco2_taxed_€_per_km\tkm_in_sweden_per_y\tdepot_kWh_per_traversal\tdestination_kWh_per_traversal\trest_stop_kWh_per_traversal\ters_kWh_per_traversal";
 
         public override string ToString()
         {
@@ -158,7 +158,11 @@ namespace ScoreInfrastructurePlan
                     Road_and_pollution_tax_euroPerKm.Val,
                     CO2_euroPerKm_total.Val,
                     CO2_euroPerKm_internalized.Val,
-                    TotalAnnualRouteKmInSweden.Val
+                    TotalAnnualRouteKmInSweden.Val,
+                    UsedChargerTypes.Contains(RouteSegmentType.Depot) ? InfraUsePerTraversal.Where(n => n.Key.Type == RouteSegmentType.Depot).Sum(n => n.Value.kWh.Val) : 0f,
+                    UsedChargerTypes.Contains(RouteSegmentType.Destination) ? InfraUsePerTraversal.Where(n => n.Key.Type == RouteSegmentType.Destination).Sum(n => n.Value.kWh.Val) : 0f,
+                    UsedChargerTypes.Contains(RouteSegmentType.RestStop) ? InfraUsePerTraversal.Where(n => n.Key.Type == RouteSegmentType.RestStop).Sum(n => n.Value.kWh.Val) : 0f,
+                    UsedChargerTypes.Contains(RouteSegmentType.Road) ? InfraUsePerTraversal.Where(n => n.Key.Type == RouteSegmentType.Road).Sum(n => n.Value.kWh.Val) : 0f,
                 };
             sb.Append(string.Join(separator, vals2.Select(n => Math.Round(1000*n)/1000f)));
             return sb.ToString();

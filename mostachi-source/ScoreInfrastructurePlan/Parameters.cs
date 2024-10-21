@@ -91,6 +91,8 @@ namespace ScoreInfrastructurePlan
         uint _instanceNo = _instanceCounter++;
 
         private ParameterTimeSeries<T> _scaledSeries;
+        public bool IsModified { get { return _scaledSeries != null; } }
+
         public void ResetToDefault()
         {
             _scaledSeries = null;
@@ -575,9 +577,9 @@ namespace ScoreInfrastructurePlan
                 //Guesstimate the new blend ratio
                 ModelYear y = (ModelYear)i;
                 float oldSupplyCap = World.RenewableDiesel_Supply_cap_liter_per_year[y].Val;
-                float oldBlendRatio = World.RenewableDiesel_Blend_guess_ratio[y].Val;
-                float totalConsumption = oldSupplyCap / oldBlendRatio;
-                newBlendRatio[i] = Math.Min(1, Math.Max(0, literPerYear[i] / totalConsumption));
+                float oldBlendRatio = World.RenewableDiesel_Blend_guess_ratio[y].Val; //may be 100%, not reaching the supply cap
+                float totalDieselConsumption = oldSupplyCap / oldBlendRatio;
+                newBlendRatio[i] = Math.Min(1, Math.Max(0, literPerYear[i] / totalDieselConsumption));
 
                 //Adjust diesel price, CO2 emissions and CO2 tax to match
                 float fossilPrice = World.FossilDiesel_Price_euro_per_liter[y].Val;
@@ -613,7 +615,8 @@ namespace ScoreInfrastructurePlan
         {
             get
             {
-                return float.IsNormal(Ers_UserChargeOverride_ExcludingEnergyAndGridFeesAndTaxes[0].Val);
+                return Ers_UserChargeOverride_ExcludingEnergyAndGridFeesAndTaxes.IsModified
+                    || float.IsNormal(Ers_UserChargeOverride_ExcludingEnergyAndGridFeesAndTaxes[ModelYear.Y2050].Val);
             }
         }
     }

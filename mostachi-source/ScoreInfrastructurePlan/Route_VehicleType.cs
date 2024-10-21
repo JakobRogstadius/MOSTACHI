@@ -15,7 +15,7 @@
         {
             //TODO: These thresholds remove noise, which means the data may not add up to 100% of the expected
 
-            return Route.Length_km > 1
+            return Route.Length_km_SE > 1
                 && (LoadedTripCountPerYear2020 + EmptyTripCountPerYear2020) > 1
                 && Route.SegmentSequence.Length > 2;
         }
