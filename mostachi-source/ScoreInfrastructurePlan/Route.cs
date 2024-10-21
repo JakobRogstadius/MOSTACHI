@@ -7,7 +7,8 @@ namespace ScoreInfrastructurePlan
     {
         public int ID { get; set; }
         public int VariantNo { get; set; }
-        public Kilometers Length_km { get; private set; }
+        public Kilometers Length_km_total { get; private set; }
+        public Kilometers Length_km_SE { get; private set; }
         public Hours Length_h_excl_breaks { get; private set; }
         private RouteSegment[] _segmentSequence;
         public RouteSegment[] SegmentSequence
@@ -16,7 +17,8 @@ namespace ScoreInfrastructurePlan
             set
             {
                 _segmentSequence = value;
-                Length_km = new Kilometers(value.Sum(n => n.LengthToTraverseOneWay_km.Val));
+                Length_km_total = new Kilometers(value.Sum(n => n.LengthToTraverseOneWay_km.Val));
+                Length_km_SE = new Kilometers(value.Sum(n => n.PlaceHash.IsInSweden ? n.LengthToTraverseOneWay_km.Val : 0));
                 Length_h_excl_breaks = new Hours(value.Sum(n => n.LengthToTraverse_h.Val));
             }
         }

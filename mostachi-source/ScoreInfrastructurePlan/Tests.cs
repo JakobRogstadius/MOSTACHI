@@ -85,7 +85,7 @@ namespace ScoreInfrastructurePlan
                 ID = 0,
                 SegmentSequence = GetRoute()
             };
-            Console.WriteLine("Total route length is " + route.Length_km + " km, " + route.Length_h_excl_breaks + " h.");
+            Console.WriteLine("Total route length is " + route.Length_km_total + " km, " + route.Length_h_excl_breaks + " h.");
             Console.WriteLine(route.ToString(year));
 
             Route_VehicleType rvpair = new Route_VehicleType()

@@ -233,10 +233,6 @@ namespace ScoreInfrastructurePlan
                 modifiedSeq.Add(depot.ID);
                 foreach (var id in seq.clusterSequence)
                 {
-                    //This means we skip all parts of routes that are outside of Sweden. Only the part inside Sweden matters in the battery and cost calculations.
-                    if (!routeSegments[id].PlaceHash.IsInSweden)
-                        continue;
-
                     if (adjacentRestAreas.TryGetValue(id, out int restAreaID))
                     {
                         if (passedRestAreas.Add(restAreaID))
@@ -535,7 +531,7 @@ namespace ScoreInfrastructurePlan
                         var usedPower_kWPerLaneKm = new KiloWattsPerKilometer(g.Average(n => n.cost.UsedPower_kWPeak_PerLaneKm.Val)); //This could be weighted by ratio in the cell
                         var laneKm = new Kilometers(g.Sum(n => n.km * (n.IsBidirectional ? 2 : 1)));
                         var ersCandidateKm = new Kilometers(g.Sum(n => (n.ersCandidate ? 1 : 0) * n.km * (n.IsBidirectional ? 2 : 1)));
-                        var bidirectionalErsKm = new Kilometers(g.Sum(n => (n.cost.InstalledPower_kWPeak_Segment > 0 ? 1 : 0) * n.km * (n.IsBidirectional ? 2 : 1)));
+                        var bidirectionalErsKm = new Kilometers(g.Sum(n => (n.cost.InstalledPower_kWPeak_Segment > 0 ? 1 : 0) * n.km * (n.IsBidirectional ? 1 : 0.5f)));
                         var installedPower_kW = installedPower_kWPerLaneKm * laneKm; //Road power needed in this cell (is this even meaningful?)
                         var usedPower_kW = usedPower_kWPerLaneKm * laneKm;
                         var cost_EuroPerYear = new EuroPerYear(g.Sum(n => n.cost.Cost_EuroPerYear.Val * n.Ratio));
@@ -766,7 +762,8 @@ namespace ScoreInfrastructurePlan
                     g.Key.stage,
                     g.Key.year,
                     kWhPerYear: g.Sum(n => n.kWh),
-                    vkmPerYear: 365 * g.Sum(n => n.traffic.aadtTotal * n.bidirectionalErsKm),
+                    vkmPerYearTotal: 365 * g.Sum(n => n.traffic.aadtTotal * n.bidirectionalErsKm),
+                    vkmPerYearErs: 365 * g.Sum(n => n.traffic.aadtErs * n.bidirectionalErsKm),
                     ersKm: g.Sum(n => n.bidirectionalErsKm),
                     utilization: g.Sum(n => n.traffic.aadtErs * n.bidirectionalErsKm) / g.Sum(n => n.traffic.aadtTotal * n.bidirectionalErsKm),
                     count: g.Count()
@@ -780,7 +777,8 @@ namespace ScoreInfrastructurePlan
                 .Select(g => (
                     year: g.Key,
                     kWhPerYear: g.Sum(n => n.kWh),
-                    vkmPerYear: 365 * g.Sum(n => n.traffic.aadtTotal * n.bidirectionalErsKm),
+                    vkmPerYearTotal: 365 * g.Sum(n => n.traffic.aadtTotal * n.bidirectionalErsKm),
+                    vkmPerYearErs: 365 * g.Sum(n => n.traffic.aadtErs * n.bidirectionalErsKm),
                     ersKm: g.Sum(n => n.bidirectionalErsKm),
                     utilization: g.Sum(n => n.traffic.aadtErs * n.bidirectionalErsKm) / g.Sum(n => n.traffic.aadtTotal * n.bidirectionalErsKm),
                     count: g.Count()
@@ -788,11 +786,11 @@ namespace ScoreInfrastructurePlan
                 .OrderBy(n => n.year)
                 .ToList();
 
-            string header = "year\tstage\ters_km\tkm_per_year\tutilization\tkWh_per_year\n";
+            string header = "year\tstage\ters_km\tkm_per_year_total\tkm_per_year_ers\tutilization\tkWh_per_year\n";
             string utilFilePath = Paths.ExperimentLogsDir + "ersStageUtilization.tsv";
             File.WriteAllText(utilFilePath, header);
-            File.AppendAllLines(utilFilePath, ersStageUtilization.Select(n => n.year + "\t" + n.stage + "\t" + n.ersKm + "\t" + n.vkmPerYear + "\t" + n.utilization + "\t" + n.kWhPerYear));
-            File.AppendAllLines(utilFilePath, ersTotalUtilization.Select(n => n.year + "\ttotal\t" + n.ersKm + "\t" + n.vkmPerYear + "\t" + n.utilization + "\t" + n.kWhPerYear));
+            File.AppendAllLines(utilFilePath, ersStageUtilization.Select(n => n.year + "\t" + n.stage + "\t" + n.ersKm + "\t" + n.vkmPerYearTotal + "\t" + n.vkmPerYearErs + "\t" + n.utilization + "\t" + n.kWhPerYear));
+            File.AppendAllLines(utilFilePath, ersTotalUtilization.Select(n => n.year + "\ttotal\t" + n.ersKm + "\t" + n.vkmPerYearTotal + "\t" + n.vkmPerYearErs + "\t" + n.utilization + "\t" + n.kWhPerYear));
 
             //Total nyttjandegrad
             //Fkm per år på ERS - väg
@@ -804,7 +802,8 @@ namespace ScoreInfrastructurePlan
             string mergedUtilFilePath = Paths.RootPaths.LogsRoot + "ers_utilization.tsv";
             File.AppendAllText(mergedUtilFilePath, scenarioName + '\t');
             File.AppendAllText(mergedUtilFilePath, padding + string.Join('\t', ersTotalUtilization.Select(n => n.kWhPerYear)) + '\t');
-            File.AppendAllText(mergedUtilFilePath, padding + string.Join('\t', ersTotalUtilization.Select(n => n.vkmPerYear)) + '\t');
+            File.AppendAllText(mergedUtilFilePath, padding + string.Join('\t', ersTotalUtilization.Select(n => n.vkmPerYearTotal)) + '\t');
+            File.AppendAllText(mergedUtilFilePath, padding + string.Join('\t', ersTotalUtilization.Select(n => n.vkmPerYearErs)) + '\t');
             File.AppendAllText(mergedUtilFilePath, padding + string.Join('\t', ersTotalUtilization.Select(n => n.ersKm)) + '\t');
             File.AppendAllText(mergedUtilFilePath, padding + string.Join('\t', ersTotalUtilization.Select(n => n.utilization)) + '\n');
 
@@ -938,7 +937,7 @@ namespace ScoreInfrastructurePlan
             public void Increment(ModelYear year, Route_VehicleType route_vehicletype, (ChargingStrategy chargingStrategy, KiloWattHours netBatteryCapacity_kWh, RouteCost costs) values)
             {
                 var costs = values.costs;
-                var r = costs.RatioOfOperationInSweden; //already included in the _*PerYear properties
+                //var r = costs.RatioOfOperationInSweden; //already included in the _*PerYear properties
                 var v = VehicleTypes[route_vehicletype.VehicleType];
 
                 if (values.chargingStrategy == ChargingStrategy.NA_Diesel)
@@ -995,6 +994,8 @@ namespace ScoreInfrastructurePlan
 
             public void Increment(RouteSegment segment, ChargingSiteCost infra)
             {
+                if (!segment.PlaceHash.IsInSweden)
+                    return;
                 var cpStats = ChargerPlacements[segment.Type];
                 cpStats.EuroPerYear += infra.Cost_EuroPerYear;
                 cpStats.KiloWattHoursPerYear += infra.EnergyDelivered_kWhPerYear;
@@ -1097,7 +1098,7 @@ namespace ScoreInfrastructurePlan
                     route.Route.VariantNo,
                     year.AsInteger(),
                     route.VehicleType,
-                    route.Route.Length_km,
+                    route.Route.Length_km_total,
                     route.Route.Length_h_excl_breaks,
                     route.GetTotalTripCountPerYear(year),
                     route.GetLoadedTripCountPerYear(year),

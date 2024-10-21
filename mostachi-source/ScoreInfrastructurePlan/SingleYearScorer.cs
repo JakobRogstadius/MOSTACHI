@@ -304,8 +304,8 @@ namespace ScoreInfrastructurePlan
             var tcost = traversalCost.cost;//perTraversalCost;
             var vt = route_vt.VehicleType;
             var driverTime_h = tcost.Traversal_h_Total - vt.GetNormalizedDepotTime_h(year, route_vt.Route.Length_h_excl_breaks);
-            var route_length_km = route_vt.Route.Length_km;
-            var route_km_per_year = new KilometersPerYear(route_length_km.Val * route_trips_per_year.Val);
+            var route_length_km_total = route_vt.Route.Length_km_total;
+            var route_km_per_year = new KilometersPerYear(route_length_km_total.Val * route_trips_per_year.Val);
             var single_vehicle_km_per_year = vt.Common_Annual_distance_km[year];
             var meanCargoWeightPerTrip = route_trips_per_year > 0 ? new Tonnes(route_vt.GetCargoTonnesPerYear(year).Val / route_trips_per_year.Val) : new Tonnes(0);
 
@@ -315,17 +315,17 @@ namespace ScoreInfrastructurePlan
                 costPerKm = new RouteCost()
                 {
                     RouteIsElectrified = false,
-                    RatioOfOperationInSweden = tcost.Traversal_h_InSweden / (tcost.Traversal_h_Total + new Hours(0.0001f)), //Avoid division by zero
+                    RatioOfOperatingDistanceInSweden = route_vt.Route.Length_km_SE / (route_vt.Route.Length_km_total + new Kilometers(0.0001f)), //Avoid division by zero
                     TotalAnnualRouteKm = route_km_per_year,
                     TotalAnnualRouteTonKm = meanCargoWeightPerTrip * route_km_per_year,
                     BatteryAgeing_euroPerKm = new EuroPerKilometer(0),
                     BatteryAgeing_kWhPerKm = new KiloWattHoursPerKilometer(0),
                     ErsPickupAgeing_euroPerKm = new EuroPerKilometer(0),
-                    Driver_euroPerKm = vt.Common_Driver_cost_euro_per_h[year] * driverTime_h / route_length_km,
-                    Energy_euroPerKm = Parameters.World.Diesel_Price_euro_per_liter[year] * tcost.Diesel_liter / route_length_km,
+                    Driver_euroPerKm = vt.Common_Driver_cost_euro_per_h[year] * driverTime_h / route_length_km_total,
+                    Energy_euroPerKm = Parameters.World.Diesel_Price_euro_per_liter[year] * tcost.Diesel_liter / route_length_km_total,
                     Road_and_pollution_tax_euroPerKm = (Parameters.World.Diesel_Road_tax_euro_per_liter[year] + Parameters.World.Diesel_Pollution_tax_euro_per_liter[year]) * vt.ICEV_Fuel_consumption_liter_per_km[year],
-                    CO2_euroPerKm_total = Parameters.World.CO2_SCC_euro_per_kg[year] * (Parameters.World.Diesel_Emissions_kg_CO2_per_liter[year] * tcost.Diesel_liter) / route_length_km,
-                    CO2_euroPerKm_internalized = Parameters.World.Diesel_CO2_tax_euro_per_liter[year] * tcost.Diesel_liter / route_length_km,
+                    CO2_euroPerKm_total = Parameters.World.CO2_SCC_euro_per_kg[year] * (Parameters.World.Diesel_Emissions_kg_CO2_per_liter[year] * tcost.Diesel_liter) / route_length_km_total,
+                    CO2_euroPerKm_internalized = Parameters.World.Diesel_CO2_tax_euro_per_liter[year] * tcost.Diesel_liter / route_length_km_total,
                     VehicleAgeing_euroPerKm = vt.ICEV_ChassisAndMaintenance_cost_euro_per_km(year),
                     Interest_euroPerKm = GetMeanAnnualInterestPayment(Parameters.World.Economy_Private_sector_interest_public_charging_and_trucks_percent[year], vt.ICEV_Chassis_cost_euro[year]) / single_vehicle_km_per_year,
                     TripCountMultiplier = new Dimensionless(1),
@@ -351,12 +351,12 @@ namespace ScoreInfrastructurePlan
                 //Calculate how long it takes for the battery to reach the reference EoL
                 //TODO: I think there should be some special handling here of days without driving
                 var annualCalendarAgeing = new OtherUnit(365 * 24 * tcost.BatteryAgeing_Calendar_RatioOfReferenceLifetime.Val / tcost.Traversal_h_Total.Val);
-                var annualCycleAgeing = new OtherUnit(single_vehicle_km_per_year.Val * tcost.BatteryAgeing_Cycling_RatioOfLifetime.Val / route_length_km.Val);
+                var annualCycleAgeing = new OtherUnit(single_vehicle_km_per_year.Val * tcost.BatteryAgeing_Cycling_RatioOfLifetime.Val / route_length_km_total.Val);
                 var yearsToRefEolThreshold = new Years(1 / (annualCalendarAgeing.Val + annualCycleAgeing.Val));
 
                 var refLossAtEoL = (1 - Parameters.Battery.Net_End_of_life_definition_ratio_of_net[year]);
                 var annualLoss_ratioOfNet = new OtherUnit(refLossAtEoL.Val * (annualCalendarAgeing.Val + annualCycleAgeing.Val));
-                var tripsPerYear = new OtherUnit(single_vehicle_km_per_year.Val / route_length_km.Val);
+                var tripsPerYear = new OtherUnit(single_vehicle_km_per_year.Val / route_length_km_total.Val);
 
                 //Calculate how long the battery can be used if the lifetime is limited by minimum output power and minimum range
                 KiloWatts initialPower = netBatteryCapacity_kWh * Parameters.Battery.Net_Max_permitted_discharging_rate_c[year];
@@ -385,15 +385,15 @@ namespace ScoreInfrastructurePlan
 
                 //The goal is to calculate the ratio at which we need to replentish vehicle batteries, so the consumption rate of virgin batteries. The entire battery pack is spent as a vehicle battery at the EoL in the truck.
                 var grossBatteryCapacity_kWh = netBatteryCapacity_kWh / Parameters.Battery.Gross_SoC_window_ratio[year];
-                KiloWattHoursPerKilometer grossConsumptionOfVehicleQualityBatteries_kwhPerKm = route_vt.Route.Length_km > 0 ? grossBatteryCapacity_kWh / batteryLifetimeInVehicle_km : new(0);
+                KiloWattHoursPerKilometer grossConsumptionOfVehicleQualityBatteries_kwhPerKm = route_length_km_total > 0 ? grossBatteryCapacity_kWh / batteryLifetimeInVehicle_km : new(0);
 
                 //energy
-                EuroPerKilometer energy_euroPerKm = tcost.ElectricityPurchased_Euro / route_length_km;
+                EuroPerKilometer energy_euroPerKm = tcost.ElectricityPurchased_Euro / route_length_km_total;
                 //emissions
                 float batteryScrapSoH = Math.Min(0.7f, lossWhenUnusableByVehicle_ratioOfNet.Val);
                 Dimensionless emissionsAllocatedToThisTruck_ratio = new Dimensionless(Math.Min(1, lossWhenUnusableByVehicle_ratioOfNet.Val / batteryScrapSoH));
                 KilogramPerKilometer co2_battery_kgPerKm = (Parameters.Battery.Net_Production_emissions_kg_CO2_per_kWh[year] * netBatteryCapacity_kWh * emissionsAllocatedToThisTruck_ratio) / batteryLifetimeInVehicle_km;
-                EuroPerKilometer co2_euroPerKm_total = (tcost.CO2_kg / route_length_km + co2_battery_kgPerKm) * Parameters.World.CO2_SCC_euro_per_kg[year];
+                EuroPerKilometer co2_euroPerKm_total = (tcost.CO2_kg / route_length_km_total + co2_battery_kgPerKm) * Parameters.World.CO2_SCC_euro_per_kg[year];
                 EuroPerKilometer co2_euroPerKm_internalized = co2_euroPerKm_total * Parameters.World.CO2_Tax_ratio_of_SCC[year];
                 
                 //distance ageing of vehicle and pick-up
@@ -410,11 +410,11 @@ namespace ScoreInfrastructurePlan
                     ersPickup_euroPerKm = (pickupBase_euro + pickupPower_euro) / pickupLifespan_km;
                 }
                 //infrastructure fees
-                EuroPerKilometer infraFees_euroPerKm_approximate = tcost.InfraFees_euro_approximate / route_length_km; //FIXED BUG: Was annual distance
+                EuroPerKilometer infraFees_euroPerKm_approximate = tcost.InfraFees_euro_approximate / route_length_km_total; //FIXED BUG: Was annual distance
 
                 //Time induced costs
                 //These costs are per hour. If the time to traverse the route increases, so do the per-km costs.
-                EuroPerKilometer driver_euroPerKm = vt.Common_Driver_cost_euro_per_h[year] * driverTime_h / route_length_km;
+                EuroPerKilometer driver_euroPerKm = vt.Common_Driver_cost_euro_per_h[year] * driverTime_h / route_length_km_total;
                 Euro bevPrice_total = vt.BEV_Chassis_cost_excl_battery_euro[year] + (hasPickup ? Parameters.Infrastructure.ERS_pick_up_cost_base_heavy_euro[year] : new Euro(0)) + Parameters.Battery.Net_Pack_cost_euro_per_kWh[year] * netBatteryCapacity_kWh;
                 EuroPerKilometer interest_euroPerKm = GetMeanAnnualInterestPayment(Parameters.World.Economy_Private_sector_interest_public_charging_and_trucks_percent[year], bevPrice_total) / single_vehicle_km_per_year;
 
@@ -426,7 +426,7 @@ namespace ScoreInfrastructurePlan
                 costPerKm = new RouteCost()
                 {
                     RouteIsElectrified = true,
-                    RatioOfOperationInSweden = tcost.Traversal_h_InSweden / (tcost.Traversal_h_Total + new Hours(0.0001f)), //Avoid division by zero
+                    RatioOfOperatingDistanceInSweden = route_vt.Route.Length_km_SE / (route_vt.Route.Length_km_total + new Kilometers(0.0001f)), //Avoid division by zero
                     TotalAnnualRouteKm = route_km_per_year * tripCountMultiplier,
                     TotalAnnualRouteTonKm = meanCargoWeightPerTrip * route_km_per_year * tripCountMultiplier * bevCargoCapacity_ratio,
                     BatteryAgeing_euroPerKm = batteryAgeing_euroPerKm,
@@ -455,7 +455,6 @@ namespace ScoreInfrastructurePlan
             ModelYear year,
             Route_VehicleType route,
             InfraOffers infraOffers,
-            //Dictionary<RouteSegmentType, float> referenceUserCost_euroPerKWh,
             ChargingStrategy chargingStrat,
             KiloWattHours netBatteryCapacity_kWh,
             Dimensionless initial_SoC)
@@ -505,13 +504,40 @@ namespace ScoreInfrastructurePlan
             //Else, the vehicle runs on electricity. Compute the full TraversalCost
 
             var cumulativeCost = new CostPerRouteTraversal();
+            var depotCost = new CostPerRouteTraversal();
+            var cumulativeCostEnRouteInSE = new CostPerRouteTraversal();
             KiloWattHours currentCharge_kWh = netBatteryCapacity_kWh * initial_SoC;
             KiloWattHours minChargeAlongRoute_kWh = currentCharge_kWh;
-            if (Parameters.VERBOSE) Console.Write(chargingStrat + " \t");
+            var socLowerBound = route.VehicleType.GetEnergyConsumption_kWh_per_km(year, netBatteryCapacity_kWh, chargingStrat.HasErsPickup()) * route.VehicleType.BEV_Min_range_buffer_km[year];
             foreach (var segment in route.Route.SegmentSequence)
             {
+                if (segment.Type == RouteSegmentType.Destination)
+                {
+                    //We have reached the end of the route. Let's adjust the battery state for any skipped sections abroad.
+                    //It might be more accurate to use time than distance here.
+                    Kilometers kmSE = route.Route.Length_km_SE, kmTotal = route.Route.Length_km_total;
+                    Kilometers kmAbroad = kmTotal - kmSE;
+
+                    cumulativeCost.IncreaseBySkippedRatioAbroad(kmAbroad / kmTotal, route.VehicleType.Common_Depot_stop_h[year], !route.Route.SegmentSequence.First().PlaceHash.IsInSweden, depotCost);
+
+                    KiloWattHours deltaKWhSE = cumulativeCostEnRouteInSE.ElectricityPurchased_kWh - cumulativeCostEnRouteInSE.ElectricitySpent_kWh;
+                    currentCharge_kWh += deltaKWhSE * (kmAbroad / kmSE);
+                }
+
+                //If everything still works as intended but the battery still goes below the minimum acceptable range buffer, reject this solution
+                if (currentCharge_kWh < socLowerBound)
+                    return (false, new KiloWattHours(0), null, null);
+
+                if (!segment.PlaceHash.IsInSweden && segment.Type != RouteSegmentType.Depot && segment.Type != RouteSegmentType.Destination)
+                    continue;
+
                 var step = GetSegmentTraversalCost(currentCharge_kWh, plannedStops.Contains(segment.ID), year, route.Route.Length_h_excl_breaks, segment, infraOffers, route.VehicleType, chargingStrat, netBatteryCapacity_kWh);
                 cumulativeCost.Add(step.cost);
+
+                if (segment.Type == RouteSegmentType.Depot)
+                    depotCost.Add(step.cost);
+                else
+                    cumulativeCostEnRouteInSE.Add(step.cost);
 
                 if (!float.IsNormal(step.delta_kWh.Val) && step.delta_kWh != 0)
                 {
@@ -519,14 +545,8 @@ namespace ScoreInfrastructurePlan
                     Console.WriteLine(step.delta_kWh);
                     continue;
                 }
+                
                 currentCharge_kWh += step.delta_kWh;
-
-                //If everything still works as intended but the battery still goes below the minimum acceptable range buffer, reject this solution
-                if (currentCharge_kWh < route.VehicleType.GetEnergyConsumption_kWh_per_km(year, netBatteryCapacity_kWh, chargingStrat.HasErsPickup()) * route.VehicleType.BEV_Min_range_buffer_km[year])
-                {
-                    if (Parameters.VERBOSE) Console.WriteLine("-X");
-                    return (false, new KiloWattHours(0), null, null);
-                }
 
                 minChargeAlongRoute_kWh = UnitMath.Min(minChargeAlongRoute_kWh, currentCharge_kWh);
 
@@ -541,7 +561,7 @@ namespace ScoreInfrastructurePlan
             if (Parameters.VERBOSE) Console.WriteLine("-O");
 
             KiloWattHoursPerKilometer kWhPerKm = route.VehicleType.GetEnergyConsumption_kWh_per_km(year, netBatteryCapacity_kWh, chargingStrat.HasErsPickup());
-            KiloWattHours kWhSpentPerTraversal = kWhPerKm * route.Route.Length_km;
+            KiloWattHours kWhSpentPerTraversal = kWhPerKm * route.Route.Length_km_total;
             KiloWattHours bufferKWh = kWhPerKm * route.VehicleType.BEV_Min_range_buffer_km[year];
             
             //The route is OK if the vehicle can return and charge along the way.
@@ -604,6 +624,7 @@ namespace ScoreInfrastructurePlan
                 OfWhichIsDelay_h = flows.ofWhichIsDelay_h,
                 ElectricityPurchased_Euro = Parameters.GetMeanElectricityPrice_inclGridFee(year, segment.Type, segment.Region) * flows.energyPurchased_kWh,
                 ElectricityPurchased_kWh = flows.energyPurchased_kWh,
+                ElectricitySpent_kWh = flows.discharging_kWh,
                 ElectricityPurchasePotential_kWh = flows.maxChargingPotential_kWh,
                 CO2_kg = Parameters.GetCO2_kgPerkWh(year, segment.Region) * flows.energyPurchased_kWh,
                 InfraFees_euro_approximate = flows.infraFees_euro,
@@ -725,6 +746,9 @@ namespace ScoreInfrastructurePlan
             for (int i = 0; i < route.Route.SegmentSequence.Length; i++)
             {
                 var segment = route.Route.SegmentSequence[i];
+
+                //We don't have information about charging locations abroad. However, we still plan stops, as otherwise all inbound trucks will want to stop 4.5 h from the border.
+
                 switch (segment.Type)
                 {
                     case RouteSegmentType.Depot:
