@@ -57,7 +57,7 @@ namespace GenerateDatasets
              * This method generates the following files
              * 
              * Filename                             Alias
-             * acea_all_stop_location_matches.tsv   Paths.AceaAllStopClusters
+             * rest_stop_location_matches.tsv       Paths.RestStopClusters
              * route_length_class.tsv               Paths.RouteLengthClass
              * cluster_traffic_and_length.tsv       Paths.AnnualMovementsAndLengthPerCluster
              * ers_build_order.tsv                  Paths.ErsBuildOrder
@@ -89,7 +89,7 @@ namespace GenerateDatasets
 
             GenerateAnnualMovementsAndLengthPerClusterCSV(routeClassWeights, clusters);
 
-            MatchAceaChargePointsWithClusters(nodes, clusters);
+            MatchRestStopChargePointsWithClusters(nodes, clusters);
 
             CalculateClusterToGridMapping();
         }
@@ -239,7 +239,7 @@ namespace GenerateDatasets
             File.WriteAllText(aadtOutputPath + ".unmatched", string.Join('\n', unmatched));
         }
 
-        private static void MatchAceaChargePointsWithClusters(
+        private static void MatchRestStopChargePointsWithClusters(
             Dictionary<long, (double lat, double lon, bool bidirectional)> nodes,
             Dictionary<int, (double from_lat, double from_lon, double to_lat, double to_lon, double mid_lat, double mid_lon, bool bidirectional, float distance_m, float speed_kmph)> clusters)
         {
@@ -258,15 +258,14 @@ namespace GenerateDatasets
                 rtree.Add(new Rectangle(min, max), cluster.clusterID);
             }
 
-            Console.WriteLine("Join ACEA long haul points with OSM road network...");
-            Dictionary<int, List<int>> clustersWithAceaChargeLocation = new Dictionary<int, List<int>>();
-            Dictionary<int, (double lat, double lon)> aceaPoints = new Dictionary<int, (double lat, double lon)>();
-            int nextAceaPointID = 0;
-            foreach (var point in DataReader.ReadACEAChargeLocations(Paths.AceaLongHaulStopCoordinates, swedenOnly: true)
-                .Union(DataReader.ReadACEAChargeLocations(Paths.AceaRegionalStopCoordinates, swedenOnly: true)))
+            Console.WriteLine("Join rest stop points with OSM road network...");
+            Dictionary<int, List<int>> clustersWithRestStopChargeLocation = new Dictionary<int, List<int>>();
+            Dictionary<int, (double lat, double lon)> restStopPoints = new Dictionary<int, (double lat, double lon)>();
+            int nextRestStopPointID = 0;
+            foreach (var point in DataReader.ReadRestStopChargeLocations(Paths.RestStopCoordinates, swedenOnly: true))
             {
-                int pointID = nextAceaPointID++;
-                aceaPoints.Add(pointID, point);
+                int pointID = nextRestStopPointID++;
+                restStopPoints.Add(pointID, point);
 
                 //var neighbors = rtree.Nearest(new RTree.Point((float)point.latitude, (float)point.longitude, 0), oneKmLongitude * 3f);
                 var neighbors = rtree.Intersects(new RTree.Rectangle((float)point.latitude - oneKmLat, (float)point.longitude - oneKmLon, (float)point.latitude + oneKmLat, (float)point.longitude + oneKmLon, 0, 0));
@@ -281,23 +280,23 @@ namespace GenerateDatasets
                     if (CoordinateHash.HaversineDistance_meters(p1.mid_lat, point.latitude, p1.mid_lon, point.longitude) > 1500)
                         continue;
 
-                    if (!clustersWithAceaChargeLocation.TryAdd(neighbor, new List<int>() { pointID }))
-                        clustersWithAceaChargeLocation[neighbor].Add(pointID);
+                    if (!clustersWithRestStopChargeLocation.TryAdd(neighbor, new List<int>() { pointID }))
+                        clustersWithRestStopChargeLocation[neighbor].Add(pointID);
                 }
             }
 
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine("cluster_id\tacea_point_id\tcluster_mid_lat\tcluster_mid_lon\tacea_point_lat\tacea_point_lon");
-            foreach (var cluster in clustersWithAceaChargeLocation)
+            sb.AppendLine("cluster_id\trest_stop_point_id\tcluster_mid_lat\tcluster_mid_lon\trest_stop_point_lat\trest_stop_point_lon");
+            foreach (var cluster in clustersWithRestStopChargeLocation)
             {
-                foreach (var aceaPoint in cluster.Value)
+                foreach (var restStopPoint in cluster.Value)
                 {
                     var p1 = clusters[cluster.Key];
-                    var p2 = aceaPoints[aceaPoint];
-                    sb.AppendLine(string.Join('\t', new object[] { cluster.Key, aceaPoint, p1.mid_lat, p1.mid_lon, p2.lat, p2.lon }));
+                    var p2 = restStopPoints[restStopPoint];
+                    sb.AppendLine(string.Join('\t', new object[] { cluster.Key, restStopPoint, p1.mid_lat, p1.mid_lon, p2.lat, p2.lon }));
                 }
             }
-            File.WriteAllText(Paths.AceaAllStopClusters, sb.ToString());
+            File.WriteAllText(Paths.RestStopClusters, sb.ToString());
 
             Console.WriteLine("done");
         }

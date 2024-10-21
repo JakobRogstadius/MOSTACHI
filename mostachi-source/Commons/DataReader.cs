@@ -391,7 +391,7 @@ namespace Commons
             }
         }
 
-        public static IEnumerable<(double latitude, double longitude)> ReadACEAChargeLocations(string path, bool swedenOnly)
+        public static IEnumerable<(double latitude, double longitude)> ReadRestStopChargeLocations(string path, bool swedenOnly)
         {
             using (StreamReader r = new StreamReader(File.OpenRead(path)))
             {
@@ -418,7 +418,7 @@ namespace Commons
             }
         }
 
-        public static IEnumerable<(int clusterID, int aceaPointID, float clusterMidLat, float clusterMidLon, float aceaPointLat, float aceaPointLon)> ReadClusterIDsWithAceaStopLocation(string path)
+        public static IEnumerable<(int clusterID, int restPointID, float clusterMidLat, float clusterMidLon, float restPointLat, float restPointLon)> ReadClusterIDsWithRestStopLocation(string path)
         {
             using (StreamReader r = new StreamReader(File.OpenRead(path)))
             {

@@ -277,8 +277,6 @@ namespace ScoreInfrastructurePlan
 
         public static (Dictionary<int, RouteSegment> allSegments, Dictionary<int, int> clusterToRestArea) GetRouteSegments()
         {
-            //There are 780k clusters, 200k OD-pairs, 2000k routes, 400 acea locations, 85k swedish heavy trucks
-
             var bidirectionalNodes = DataReader.ReadBidirectionalNodes(Paths.BidirectionalNodes).ToHashSet();
 
             var nodes = DataReader.ReadNodes(Paths.Nodes).ToDictionary(n => n.nodeID, n => (n.latitude, n.longitude, isBidirectional: bidirectionalNodes.Contains(n.nodeID)));
@@ -304,11 +302,11 @@ namespace ScoreInfrastructurePlan
             //Add major rest stops
             Dictionary<int, int> clusterToRestArea = new Dictionary<int, int>();
             Dictionary<int, RouteSegment> restAreasByID = new Dictionary<int, RouteSegment>();
-            var aceaClusters = DataReader.ReadClusterIDsWithAceaStopLocation(Paths.AceaAllStopClusters)
+            var restStopClusters = DataReader.ReadClusterIDsWithRestStopLocation(Paths.RestStopClusters)
                 .GroupBy(n => n.clusterID)
-                .ToDictionary(g => g.Key, g => g.Select(n => n.aceaPointID).Min());
+                .ToDictionary(g => g.Key, g => g.Select(n => n.restPointID).Min());
             int nextID = segments.Keys.Max() + 1;
-            foreach (var restArea in aceaClusters)
+            foreach (var restArea in restStopClusters)
             {
                 if (restAreasByID.ContainsKey(restArea.Value))
                 {
@@ -702,7 +700,7 @@ namespace ScoreInfrastructurePlan
 
             File.AppendAllText(Paths.ExperimentLog.Replace(".txt", ".stats.txt"), Environment.NewLine + "Cumulative system cost is " + Math.Round(cumulativeCost_euro.Val / 1e6f) + " M€" + Environment.NewLine);
 
-            CalculateStatsPerERSStage(scenario.Name, logSettings, scenario.SimStartYear, scenario.SimEndYear);
+            //CalculateStatsPerERSStage(scenario.Name, logSettings, scenario.SimStartYear, scenario.SimEndYear);
         }
 
         private static void CalculateStatsPerERSStage(string scenarioName, LogSettings logSettings, ModelYear startYear, ModelYear endYear)

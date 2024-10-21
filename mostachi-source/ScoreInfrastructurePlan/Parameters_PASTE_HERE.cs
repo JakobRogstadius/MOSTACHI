@@ -33,13 +33,13 @@ namespace ScoreInfrastructurePlan
             public override ParameterTimeSeries<LiterPerKilometer> ICEV_Fuel_consumption_liter_per_km { get; } = new ParameterTimeSeries<LiterPerKilometer> { 0.35f, 0.341337063592656f, 0.33288854566302f, 0.324649139086415f, 0.316613668096116f, 0.308777085032081f, 0.301134467170144f };
             public override ParameterTimeSeries<EuroPerKilometer> BEV_Maintenance_cost_euro_per_km { get; } = new ParameterTimeSeries<EuroPerKilometer> { 0.039936f, 0.039936f, 0.039936f, 0.039936f, 0.039936f, 0.039936f, 0.039936f };
             public override ParameterTimeSeries<Dimensionless> BEV_Residual_value_at_end_of_life_ratio { get; } = new ParameterTimeSeries<Dimensionless> { 0.09f, 0.09f, 0.09f, 0.09f, 0.09f, 0.09f, 0.09f };
-            public override ParameterTimeSeries<KiloWattHoursPerKilometer> BEV_Energy_consumption_kWh_per_km { get; } = new ParameterTimeSeries<KiloWattHoursPerKilometer> { 1.45730611764706f, 1.38588361754075f, 1.31796153060067f, 1.25336830175221f, 1.19194078382642f, 1.13352382548893f, 1.07796987936455f };
+            public override ParameterTimeSeries<KiloWattHoursPerKilometer> BEV_Energy_consumption_kWh_per_km { get; } = new ParameterTimeSeries<KiloWattHoursPerKilometer> { 1.45730611764706f, 1.4141084259708f, 1.37219120690325f, 1.33151650447876f, 1.29204748782823f, 1.25374841782885f, 1.21658461474236f };
             public override ParameterTimeSeries<Kilometers> BEV_Min_range_buffer_km { get; } = new ParameterTimeSeries<Kilometers> { 50f, 50f, 50f, 50f, 50f, 50f, 50f };
             public override ParameterTimeSeries<Years> BEV_Lifetime_years { get; } = new ParameterTimeSeries<Years> { 10f, 11.6666666666667f, 13.3333333333333f, 15f, 15f, 15f, 15f };
             public override ParameterTimeSeries<Euro> ICEV_Chassis_cost_euro { get; } = new ParameterTimeSeries<Euro> { 259200f, 262736.783864086f, 266453.979250271f, 270360.788959337f, 274466.885227394f, 278782.4336718f, 283318.118458564f };
             public override ParameterTimeSeries<Kilogram> BEV_Chassis_weight_excl_battery_kg { get; } = new ParameterTimeSeries<Kilogram> { 17780f, 17780f, 17780f, 17780f, 17780f, 17780f, 17780f };
             public override ParameterTimeSeries<Euro> BEV_Chassis_cost_excl_battery_euro { get; } = new ParameterTimeSeries<Euro> { 215794.56f, 213303.264692705f, 211051.331053471f, 209015.761403954f, 207175.767664421f, 205512.559057275f, 204009.150207859f };
-            public override ParameterTimeSeries<KiloWattHours> BEV_Min_net_battery_capacity_kWh { get; } = new ParameterTimeSeries<KiloWattHours> { 216.666666666667f, 187.1682907583f, 161.686011071002f, 139.673050761632f, 120.657074658702f, 104.230054300458f, 90.0395128110531f };
+            public override ParameterTimeSeries<KiloWattHours> BEV_Min_net_battery_capacity_kWh { get; } = new ParameterTimeSeries<KiloWattHours> { 216.666666666667f, 216.440804779963f, 196.814361184583f, 171.095502102717f, 145.228411440534f, 121.635874454607f, 101.09464915096f };
         }
         public class HGV40Internal : VehicleType
         {
@@ -65,13 +65,13 @@ namespace ScoreInfrastructurePlan
             public override ParameterTimeSeries<LiterPerKilometer> ICEV_Fuel_consumption_liter_per_km { get; } = new ParameterTimeSeries<LiterPerKilometer> { 0.27f, 0.263317163342906f, 0.256799735225758f, 0.250443621580949f, 0.244244829674147f, 0.238199465596176f, 0.232303731816968f };
             public override ParameterTimeSeries<EuroPerKilometer> BEV_Maintenance_cost_euro_per_km { get; } = new ParameterTimeSeries<EuroPerKilometer> { 0.045696f, 0.045696f, 0.045696f, 0.045696f, 0.045696f, 0.045696f, 0.045696f };
             public override ParameterTimeSeries<Dimensionless> BEV_Residual_value_at_end_of_life_ratio { get; } = new ParameterTimeSeries<Dimensionless> { 0.09f, 0.09f, 0.09f, 0.09f, 0.09f, 0.09f, 0.09f };
-            public override ParameterTimeSeries<KiloWattHoursPerKilometer> BEV_Energy_consumption_kWh_per_km { get; } = new ParameterTimeSeries<KiloWattHoursPerKilometer> { 1.12420757647059f, 1.06911021924572f, 1.01671318074909f, 0.966884118494564f, 0.919497176094663f, 0.874432665377173f, 0.831576764081227f };
+            public override ParameterTimeSeries<KiloWattHoursPerKilometer> BEV_Energy_consumption_kWh_per_km { get; } = new ParameterTimeSeries<KiloWattHoursPerKilometer> { 1.12420757647059f, 1.09088364289176f, 1.05854750246822f, 1.02716987488361f, 0.996722347753208f, 0.967177350896542f, 0.938508131372679f };
             public override ParameterTimeSeries<Kilometers> BEV_Min_range_buffer_km { get; } = new ParameterTimeSeries<Kilometers> { 50f, 50f, 50f, 50f, 50f, 50f, 50f };
             public override ParameterTimeSeries<Years> BEV_Lifetime_years { get; } = new ParameterTimeSeries<Years> { 10f, 11.6666666666667f, 13.3333333333333f, 15f, 15f, 15f, 15f };
             public override ParameterTimeSeries<Euro> ICEV_Chassis_cost_euro { get; } = new ParameterTimeSeries<Euro> { 235200f, 237794.607834718f, 240521.566745076f, 243387.627966071f, 246399.887113539f, 249565.801751033f, 252893.209852799f };
             public override ParameterTimeSeries<Kilogram> BEV_Chassis_weight_excl_battery_kg { get; } = new ParameterTimeSeries<Kilogram> { 16172f, 16172f, 16172f, 16172f, 16172f, 16172f, 16172f };
             public override ParameterTimeSeries<Euro> BEV_Chassis_cost_excl_battery_euro { get; } = new ParameterTimeSeries<Euro> { 204865.92f, 202893.36015395f, 201110.322286173f, 199498.597276008f, 198041.725520596f, 196724.828842609f, 195534.45854814f };
-            public override ParameterTimeSeries<KiloWattHours> BEV_Min_net_battery_capacity_kWh { get; } = new ParameterTimeSeries<KiloWattHours> { 158.888888888889f, 137.256746556087f, 118.569741452068f, 102.426903891864f, 88.4818547497146f, 76.435373153669f, 66.0289760614389f };
+            public override ParameterTimeSeries<KiloWattHours> BEV_Min_net_battery_capacity_kWh { get; } = new ParameterTimeSeries<KiloWattHours> { 158.888888888889f, 158.723256838639f, 144.330531535361f, 125.470034875326f, 106.500835056391f, 89.1996412667115f, 74.1360760440377f };
         }
         public class MGV24Internal : VehicleType
         {
@@ -97,13 +97,13 @@ namespace ScoreInfrastructurePlan
             public override ParameterTimeSeries<LiterPerKilometer> ICEV_Fuel_consumption_liter_per_km { get; } = new ParameterTimeSeries<LiterPerKilometer> { 0.22f, 0.214554725686813f, 0.20924422870247f, 0.204065173140032f, 0.199014305660416f, 0.194088453448736f, 0.189284522221233f };
             public override ParameterTimeSeries<EuroPerKilometer> BEV_Maintenance_cost_euro_per_km { get; } = new ParameterTimeSeries<EuroPerKilometer> { 0.048384f, 0.048384f, 0.048384f, 0.048384f, 0.048384f, 0.048384f, 0.048384f };
             public override ParameterTimeSeries<Dimensionless> BEV_Residual_value_at_end_of_life_ratio { get; } = new ParameterTimeSeries<Dimensionless> { 0.09f, 0.09f, 0.09f, 0.09f, 0.09f, 0.09f, 0.09f };
-            public override ParameterTimeSeries<KiloWattHoursPerKilometer> BEV_Energy_consumption_kWh_per_km { get; } = new ParameterTimeSeries<KiloWattHoursPerKilometer> { 0.641214691764706f, 0.609788791717931f, 0.579903073464295f, 0.551482052770974f, 0.524453944883623f, 0.498750483215128f, 0.474306746920404f };
+            public override ParameterTimeSeries<KiloWattHoursPerKilometer> BEV_Energy_consumption_kWh_per_km { get; } = new ParameterTimeSeries<KiloWattHoursPerKilometer> { 0.641214691764706f, 0.622207707427151f, 0.60376413103743f, 0.585867261970654f, 0.568500894644422f, 0.551649303844694f, 0.535297230486639f };
             public override ParameterTimeSeries<Kilometers> BEV_Min_range_buffer_km { get; } = new ParameterTimeSeries<Kilometers> { 30f, 30f, 30f, 30f, 30f, 30f, 30f };
             public override ParameterTimeSeries<Years> BEV_Lifetime_years { get; } = new ParameterTimeSeries<Years> { 7f, 8.66666666666667f, 10.3333333333333f, 12f, 12f, 12f, 12f };
             public override ParameterTimeSeries<Euro> ICEV_Chassis_cost_euro { get; } = new ParameterTimeSeries<Euro> { 148800f, 150216.88779801f, 151706.051113582f, 153271.176724488f, 154916.13947122f, 156645.011850076f, 158462.074095593f };
             public override ParameterTimeSeries<Kilogram> BEV_Chassis_weight_excl_battery_kg { get; } = new ParameterTimeSeries<Kilogram> { 7912f, 7912f, 7912f, 7912f, 7912f, 7912f, 7912f };
             public override ParameterTimeSeries<Euro> BEV_Chassis_cost_excl_battery_euro { get; } = new ParameterTimeSeries<Euro> { 134805.12f, 133480.979480506f, 132284.061327051f, 131202.142116074f, 130224.172840815f, 129340.166074278f, 128541.093973492f };
-            public override ParameterTimeSeries<KiloWattHours> BEV_Min_net_battery_capacity_kWh { get; } = new ParameterTimeSeries<KiloWattHours> { 86.6666666666667f, 74.8673163033202f, 64.6744044284006f, 55.8692203046529f, 48.2628298634807f, 41.6920217201831f, 36.0158051244212f };
+            public override ParameterTimeSeries<KiloWattHours> BEV_Min_net_battery_capacity_kWh { get; } = new ParameterTimeSeries<KiloWattHours> { 86.6666666666667f, 86.576321911985f, 78.725744473833f, 68.4382008410868f, 58.0913645762135f, 48.6543497818426f, 40.4378596603842f };
         }
         public class MGV16Internal : VehicleType
         {
@@ -129,13 +129,13 @@ namespace ScoreInfrastructurePlan
             public override ParameterTimeSeries<LiterPerKilometer> ICEV_Fuel_consumption_liter_per_km { get; } = new ParameterTimeSeries<LiterPerKilometer> { 0.16f, 0.1560398004995f, 0.152177620874524f, 0.148411035010933f, 0.144737676843939f, 0.141155238871808f, 0.137661470706351f };
             public override ParameterTimeSeries<EuroPerKilometer> BEV_Maintenance_cost_euro_per_km { get; } = new ParameterTimeSeries<EuroPerKilometer> { 0.040704f, 0.040704f, 0.040704f, 0.040704f, 0.040704f, 0.040704f, 0.040704f };
             public override ParameterTimeSeries<Dimensionless> BEV_Residual_value_at_end_of_life_ratio { get; } = new ParameterTimeSeries<Dimensionless> { 0.09f, 0.09f, 0.09f, 0.09f, 0.09f, 0.09f, 0.09f };
-            public override ParameterTimeSeries<KiloWattHoursPerKilometer> BEV_Energy_consumption_kWh_per_km { get; } = new ParameterTimeSeries<KiloWattHoursPerKilometer> { 0.466337957647059f, 0.44348275761304f, 0.421747689792215f, 0.401077856560708f, 0.381421050824453f, 0.362727624156457f, 0.344950361396657f };
+            public override ParameterTimeSeries<KiloWattHoursPerKilometer> BEV_Energy_consumption_kWh_per_km { get; } = new ParameterTimeSeries<KiloWattHoursPerKilometer> { 0.466337957647059f, 0.452514696310655f, 0.43910118620904f, 0.426085281433203f, 0.413455196105034f, 0.401199493705232f, 0.389307076717556f };
             public override ParameterTimeSeries<Kilometers> BEV_Min_range_buffer_km { get; } = new ParameterTimeSeries<Kilometers> { 20f, 20f, 20f, 20f, 20f, 20f, 20f };
             public override ParameterTimeSeries<Years> BEV_Lifetime_years { get; } = new ParameterTimeSeries<Years> { 7f, 8.66666666666667f, 10.3333333333333f, 12f, 12f, 12f, 12f };
             public override ParameterTimeSeries<Euro> ICEV_Chassis_cost_euro { get; } = new ParameterTimeSeries<Euro> { 91200f, 91957.3645774527f, 92753.3623599453f, 93589.9640292023f, 94469.2407915219f, 95393.3695055391f, 96364.6380715572f };
             public override ParameterTimeSeries<Kilogram> BEV_Chassis_weight_excl_battery_kg { get; } = new ParameterTimeSeries<Kilogram> { 3886.4f, 3886.4f, 3886.4f, 3886.4f, 3886.4f, 3886.4f, 3886.4f };
             public override ParameterTimeSeries<Euro> BEV_Chassis_cost_excl_battery_euro { get; } = new ParameterTimeSeries<Euro> { 86355.072f, 85394.0463033778f, 84525.3551899418f, 83740.1272265117f, 83030.3433401382f, 82388.7549240118f, 81808.8098116891f };
-            public override ParameterTimeSeries<KiloWattHours> BEV_Min_net_battery_capacity_kWh { get; } = new ParameterTimeSeries<KiloWattHours> { 46.2222222222222f, 39.9292353617708f, 34.493015695147f, 29.7969174958149f, 25.7401759271897f, 22.235744917431f, 19.2084293996913f };
+            public override ParameterTimeSeries<KiloWattHours> BEV_Min_net_battery_capacity_kWh { get; } = new ParameterTimeSeries<KiloWattHours> { 46.2222222222222f, 46.1740383530587f, 41.9870637193776f, 36.500373781913f, 30.9820611073139f, 25.9489865503161f, 21.5668584855382f };
         }
         public class WorldInternal
         {
@@ -143,6 +143,7 @@ namespace ScoreInfrastructurePlan
             public ParameterTimeSeries<OtherUnit> Economy_Private_sector_interest_public_charging_and_trucks_percent { get; } = new ParameterTimeSeries<OtherUnit> { 0.08f, 0.08f, 0.08f, 0.08f, 0.08f, 0.08f, 0.08f };
             public ParameterTimeSeries<OtherUnit> Economy_Private_sector_interest_depot_charging_percent { get; } = new ParameterTimeSeries<OtherUnit> { 0.12f, 0.12f, 0.12f, 0.12f, 0.12f, 0.12f, 0.12f };
             public ParameterTimeSeries<Dimensionless> Economy_Heavy_traffic_volume_vs_2020_percent { get; } = new ParameterTimeSeries<Dimensionless> { 2f, 2.2081616064f, 2.43798883998951f, 2.69173667664826f, 2.97189479195671f, 3.28121198892946f, 3.62272316820671f };
+            public ParameterTimeSeries<Dimensionless> Economy_Logistic_BEV_penalty_percent { get; } = new ParameterTimeSeries<Dimensionless> { 0.2f, 0.2f, 0.0887410625f, 0.0393748808681445f, 0.0174708438202503f, 0.00775190621690287f, 0.00343956197044158f };
             public ParameterTimeSeries<Hours> Charging_Extra_stop_overhead_h { get; } = new ParameterTimeSeries<Hours> { 0.25f, 0.214683506425f, 0.184356031723732f, 0.158312797284197f, 0.135948585731687f, 0.116743676313593f, 0.100251767135789f };
             public ParameterTimeSeries<EuroPerKilogram> CO2_SCC_euro_per_kg { get; } = new ParameterTimeSeries<EuroPerKilogram> { 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f };
             public ParameterTimeSeries<Dimensionless> CO2_Tax_ratio_of_SCC { get; } = new ParameterTimeSeries<Dimensionless> { 0.5f, 0.55f, 0.6f, 0.65f, 0.7f, 0.75f, 0.8f };
@@ -176,7 +177,7 @@ namespace ScoreInfrastructurePlan
         {
             public ParameterTimeSeries<EuroPerKilometer> ERS_base_cost_euro_per_km { get; } = new ParameterTimeSeries<EuroPerKilometer> { 1500000f, 1426485.07485f, 1356573.11251321f, 1290087.53196193f, 1226860.40639585f, 1166732.03909872f, 1109550.56008242f };
             public ParameterTimeSeries<EuroPerKiloWattKilometer> ERS_power_cost_euro_per_kW_km { get; } = new ParameterTimeSeries<EuroPerKiloWattKilometer> { 700f, 665.69303493f, 633.067452506163f, 602.040848248902f, 572.534856318061f, 544.474951579403f, 517.790261371796f };
-            public ParameterTimeSeries<OtherUnit> ERS_maintenance_cost_ratio_per_year { get; } = new ParameterTimeSeries<OtherUnit> { 0.02f, 0.02f, 0.02f, 0.02f, 0.02f, 0.02f, 0.02f };
+            public ParameterTimeSeries<Dimensionless> ERS_maintenance_cost_ratio_per_year { get; } = new ParameterTimeSeries<Dimensionless> { 0.02f, 0.02f, 0.02f, 0.02f, 0.02f, 0.02f, 0.02f };
             public ParameterTimeSeries<Years> ERS_write_off_period_years { get; } = new ParameterTimeSeries<Years> { 25f, 25f, 25f, 25f, 25f, 25f, 25f };
             public ParameterTimeSeries<Dimensionless> ERS_profit_margin_ratio { get; } = new ParameterTimeSeries<Dimensionless> { 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f };
             public ParameterTimeSeries<Euro> ERS_pick_up_cost_base_light_euro { get; } = new ParameterTimeSeries<Euro> { 500f, 451.9603984f, 408.536403443773f, 369.284551322702f, 333.803985877547f, 301.732364889448f, 272.742159691218f };
@@ -187,8 +188,8 @@ namespace ScoreInfrastructurePlan
             public ParameterTimeSeries<Kilogram> ERS_pick_up_weight_heavy_kg { get; } = new ParameterTimeSeries<Kilogram> { 300f, 285.29701497f, 271.314622502641f, 258.017506392387f, 245.372081279169f, 233.346407819744f, 221.910112016484f };
             public ParameterTimeSeries<Dimensionless> ERS_standardization_risk_ratio { get; } = new ParameterTimeSeries<Dimensionless> { 0.5f, 0.16384f, 0.0536870912000001f, 0.017592186044416f, 0.00576460752303425f, 0.00188894659314786f, 0.000618970019642692f };
             public ParameterTimeSeries<Dimensionless> ERS_cost_of_standard_change_ratio { get; } = new ParameterTimeSeries<Dimensionless> { 0.3f, 0.3f, 0.3f, 0.3f, 0.3f, 0.3f, 0.3f };
-            public ParameterTimeSeries<Dimensionless> ERS_utilization_ratio { get; } = new ParameterTimeSeries<Dimensionless> { 0.431518849206349f, 0.431518849206349f, 0.431518849206349f, 0.431518849206349f, 0.431518849206349f, 0.431518849206349f, 0.431518849206349f };
-            public ParameterTimeSeries<Dimensionless> ERS_electricity_price_ratio { get; } = new ParameterTimeSeries<Dimensionless> { 0.690518572862225f, 0.690518572862225f, 0.690518572862225f, 0.690518572862225f, 0.690518572862225f, 0.690518572862225f, 0.690518572862225f };
+            public ParameterTimeSeries<Dimensionless> ERS_utilization_ratio { get; } = new ParameterTimeSeries<Dimensionless> { 0.397973214285714f, 0.397973214285714f, 0.397973214285714f, 0.397973214285714f, 0.397973214285714f, 0.397973214285714f, 0.397973214285714f };
+            public ParameterTimeSeries<Dimensionless> ERS_electricity_price_ratio { get; } = new ParameterTimeSeries<Dimensionless> { 0.726044759755607f, 0.726044759755607f, 0.726044759755607f, 0.726044759755607f, 0.726044759755607f, 0.726044759755607f, 0.726044759755607f };
             public ParameterTimeSeries<Euro> ERS_grid_connection_cable_euro { get; } = new ParameterTimeSeries<Euro> { 10000f, 10000f, 10000f, 10000f, 10000f, 10000f, 10000f };
             public ParameterTimeSeries<Kilometers> ERS_grid_connection_interval_km { get; } = new ParameterTimeSeries<Kilometers> { 10f, 10f, 10f, 10f, 10f, 10f, 10f };
             public ParameterTimeSeries<OtherUnit> ERS_reference_aadt { get; } = new ParameterTimeSeries<OtherUnit> { 2000f, 2000f, 2000f, 2000f, 2000f, 2000f, 2000f };
@@ -197,8 +198,8 @@ namespace ScoreInfrastructurePlan
             public ParameterTimeSeries<Euro> Rest_Stop_grid_connection_cable_euro { get; } = new ParameterTimeSeries<Euro> { 15000f, 15000f, 15000f, 15000f, 15000f, 15000f, 15000f };
             public ParameterTimeSeries<Years> Rest_Stop_write_off_period_years { get; } = new ParameterTimeSeries<Years> { 15f, 15f, 15f, 15f, 15f, 15f, 15f };
             public ParameterTimeSeries<Dimensionless> Rest_Stop_profit_margin_ratio { get; } = new ParameterTimeSeries<Dimensionless> { 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f };
-            public ParameterTimeSeries<Dimensionless> Rest_Stop_utilization_ratio { get; } = new ParameterTimeSeries<Dimensionless> { 0.431518849206349f, 0.431518849206349f, 0.431518849206349f, 0.431518849206349f, 0.431518849206349f, 0.431518849206349f, 0.431518849206349f };
-            public ParameterTimeSeries<Dimensionless> Rest_Stop_electricity_price_ratio { get; } = new ParameterTimeSeries<Dimensionless> { 0.690518572862225f, 0.690518572862225f, 0.690518572862225f, 0.690518572862225f, 0.690518572862225f, 0.690518572862225f, 0.690518572862225f };
+            public ParameterTimeSeries<Dimensionless> Rest_Stop_utilization_ratio { get; } = new ParameterTimeSeries<Dimensionless> { 0.256166666666667f, 0.256166666666667f, 0.256166666666667f, 0.256166666666667f, 0.256166666666667f, 0.256166666666667f, 0.256166666666667f };
+            public ParameterTimeSeries<Dimensionless> Rest_Stop_electricity_price_ratio { get; } = new ParameterTimeSeries<Dimensionless> { 0.637742572267575f, 0.637742572267575f, 0.637742572267575f, 0.637742572267575f, 0.637742572267575f, 0.637742572267575f, 0.637742572267575f };
             public ParameterTimeSeries<OtherUnit> Rest_Stop_reference_vehicles_per_day { get; } = new ParameterTimeSeries<OtherUnit> { 100f, 100f, 100f, 100f, 100f, 100f, 100f };
             public ParameterTimeSeries<EuroPerKiloWatt> Depot_hardware_cost_euro_per_kW { get; } = new ParameterTimeSeries<EuroPerKiloWatt> { 300f, 285.29701497f, 271.314622502641f, 258.017506392387f, 245.372081279169f, 233.346407819744f, 221.910112016484f };
             public ParameterTimeSeries<OtherUnit> Depot_hardware_maintenance_ratio_per_year { get; } = new ParameterTimeSeries<OtherUnit> { 0.1f, 0.0975248753121875f, 0.0951110130465772f, 0.0927568968818328f, 0.0904610480274618f, 0.0882220242948802f, 0.0860384191914697f };
@@ -218,11 +219,11 @@ namespace ScoreInfrastructurePlan
             public ParameterTimeSeries<OtherUnit> Destination_reference_vehicles_per_day { get; } = new ParameterTimeSeries<OtherUnit> { 50f, 50f, 50f, 50f, 50f, 50f, 50f };
             public ParameterTimeSeries<Euro> Grid_initial_acccess_base_euro { get; } = new ParameterTimeSeries<Euro> { 5000f, 5000f, 5000f, 5000f, 5000f, 5000f, 5000f };
             public ParameterTimeSeries<EuroPerKiloWatt> Grid_initial_acccess_euro_per_kW { get; } = new ParameterTimeSeries<EuroPerKiloWatt> { 300f, 300f, 300f, 300f, 300f, 300f, 300f };
-            public ParameterTimeSeries<EuroPerKiloWattHour> Grid_fee_at_100_percent_utilization_euro_per_kWh { get; } = new ParameterTimeSeries<EuroPerKiloWattHour> { 0.006f, 0.006f, 0.006f, 0.006f, 0.006f, 0.006f, 0.006f };
+            public ParameterTimeSeries<EuroPerKiloWattHour> Grid_fee_at_10_percent_utilization_euro_per_kWh { get; } = new ParameterTimeSeries<EuroPerKiloWattHour> { 0.06f, 0.06f, 0.06f, 0.06f, 0.06f, 0.06f, 0.06f };
         }
         public class BatteryInternal
         {
-            public ParameterTimeSeries<Dimensionless> Gross_SoC_window_ratio { get; } = new ParameterTimeSeries<Dimensionless> { 0.65f, 0.683156532565f, 0.718004381517283f, 0.754629820990499f, 0.793123525966178f, 0.833580796761202f, 0.876101794966388f };
+            public ParameterTimeSeries<Dimensionless> Gross_SoC_window_ratio { get; } = new ParameterTimeSeries<Dimensionless> { 0.65f, 0.79f, 0.874f, 0.9244f, 0.95464f, 0.972784f, 0.9836704f };
             public ParameterTimeSeries<Years> Gross_Calendar_lifetime_years { get; } = new ParameterTimeSeries<Years> { 15f, 16.5f, 18f, 19.5f, 21f, 22.5f, 24f };
             public ParameterTimeSeries<Dimensionless> Gross_Cycle_lifetime_cycles { get; } = new ParameterTimeSeries<Dimensionless> { 1500f, 2007.3383664f, 2686.27154481428f, 3594.83728964954f, 4810.70320831927f, 6437.80607961524f, 8615.23675936989f };
             public ParameterTimeSeries<CRate> Gross_Reference_charging_rate_c { get; } = new ParameterTimeSeries<CRate> { 1f, 1.2166529024f, 1.48024428491834f, 1.80094350550692f, 2.19112314303342f, 2.66583633148742f, 3.24339751002754f };
@@ -235,16 +236,16 @@ namespace ScoreInfrastructurePlan
             public ParameterTimeSeries<KilogramPerKiloWattHour> Gross_Production_emissions_kg_CO2_per_kWh { get; } = new ParameterTimeSeries<KilogramPerKiloWattHour> { 150f, 98.86222848f, 65.1582681335448f, 42.9446106105308f, 28.3039993744195f, 18.6546430203443f, 12.2949305366007f };
             public ParameterTimeSeries<Dimensionless> Gross_End_of_life_definition_ratio_of_gross { get; } = new ParameterTimeSeries<Dimensionless> { 0.8f, 0.8f, 0.8f, 0.8f, 0.8f, 0.8f, 0.8f };
             public ParameterTimeSeries<Dimensionless> Net_End_of_life_definition_ratio_of_net { get; } = new ParameterTimeSeries<Dimensionless> { 0.8f, 0.8f, 0.8f, 0.8f, 0.8f, 0.8f, 0.8f };
-            public ParameterTimeSeries<Years> Net_Calendar_lifetime_years { get; } = new ParameterTimeSeries<Years> { 20.7692307692308f, 21.7373314784003f, 22.5625364092713f, 23.2564358203662f, 23.8298315221152f, 24.2927861086525f, 24.6546692680029f };
-            public ParameterTimeSeries<Dimensionless> Net_Cycle_lifetime_cycles { get; } = new ParameterTimeSeries<Dimensionless> { 2307.69230769231f, 2938.32858314798f, 3741.3024404359f, 4763.70955620478f, 6065.51571201838f, 7723.0738815346f, 9833.60245221324f };
-            public ParameterTimeSeries<CRate> Net_Reference_charging_rate_c { get; } = new ParameterTimeSeries<CRate> { 1.53846153846154f, 1.78092844670887f, 2.06160898599296f, 2.38652575794456f, 2.76265054723249f, 3.1980539161234f, 3.70207837566635f };
-            public ParameterTimeSeries<CRate> Net_Reference_discharging_rate_c { get; } = new ParameterTimeSeries<CRate> { 2.30769230769231f, 2.6713926700633f, 3.09241347898943f, 3.57978863691684f, 4.14397582084873f, 4.7970808741851f, 5.55311756349953f };
-            public ParameterTimeSeries<CRate> Net_Max_permitted_charging_rate_c { get; } = new ParameterTimeSeries<CRate> { 2.30769230769231f, 2.6713926700633f, 3.09241347898943f, 3.57978863691684f, 4.14397582084873f, 4.7970808741851f, 5.55311756349953f };
-            public ParameterTimeSeries<CRate> Net_Max_permitted_discharging_rate_c { get; } = new ParameterTimeSeries<CRate> { 3.46153846153846f, 4.00708900509495f, 4.63862021848415f, 5.36968295537526f, 6.2159637312731f, 7.19562131127765f, 8.3296763452493f };
-            public ParameterTimeSeries<KiloWattHoursPerKilogram> Net_Specific_energy_kWh_per_kg { get; } = new ParameterTimeSeries<KiloWattHoursPerKilogram> { 0.13f, 0.158393131378258f, 0.192987569752384f, 0.235137734539693f, 0.286493862145626f, 0.349066614968436f, 0.425305801572762f };
-            public ParameterTimeSeries<KiloWattHoursPerLiter> Net_Energy_density_kWh_per_liter { get; } = new ParameterTimeSeries<KiloWattHoursPerLiter> { 0.325f, 0.395982828445644f, 0.482468924380961f, 0.587844336349232f, 0.716234655364066f, 0.872666537421089f, 1.06326450393191f };
-            public ParameterTimeSeries<EuroPerKiloWattHour> Net_Pack_cost_euro_per_kWh { get; } = new ParameterTimeSeries<EuroPerKiloWattHour> { 246.153846153846f, 181.224864432106f, 133.422459171769f, 98.2290849946332f, 72.3188074839842f, 53.2429872088426f, 39.1988721267117f };
-            public ParameterTimeSeries<KilogramPerKiloWattHour> Net_Production_emissions_kg_CO2_per_kWh { get; } = new ParameterTimeSeries<KilogramPerKiloWattHour> { 230.769230769231f, 144.713874152398f, 90.7491232795164f, 56.9081812247537f, 35.6867479626704f, 22.3789260655057f, 14.0336780580074f };
+            public ParameterTimeSeries<Years> Net_Calendar_lifetime_years { get; } = new ParameterTimeSeries<Years> { 20.7692307692308f, 18.7974683544304f, 18.5354691075515f, 18.985287754219f, 19.7980390513702f, 20.8165430352473f, 21.9585747421087f };
+            public ParameterTimeSeries<Dimensionless> Net_Cycle_lifetime_cycles { get; } = new ParameterTimeSeries<Dimensionless> { 2307.69230769231f, 2540.93464101266f, 3073.53723662961f, 3888.8330697204f, 5039.28518427813f, 6617.91937327838f, 8758.25556951789f };
+            public ParameterTimeSeries<CRate> Net_Reference_charging_rate_c { get; } = new ParameterTimeSeries<CRate> { 1.53846153846154f, 1.54006696506329f, 1.6936433465885f, 1.94822966844106f, 2.29523500275855f, 2.74041959107821f, 3.29724012232913f };
+            public ParameterTimeSeries<CRate> Net_Reference_discharging_rate_c { get; } = new ParameterTimeSeries<CRate> { 2.30769230769231f, 2.31010044759494f, 2.54046501988274f, 2.92234450266159f, 3.44285250413782f, 4.11062938661731f, 4.9458601834937f };
+            public ParameterTimeSeries<CRate> Net_Max_permitted_charging_rate_c { get; } = new ParameterTimeSeries<CRate> { 2.30769230769231f, 2.31010044759494f, 2.54046501988274f, 2.92234450266159f, 3.44285250413782f, 4.11062938661731f, 4.94586018349369f };
+            public ParameterTimeSeries<CRate> Net_Max_permitted_discharging_rate_c { get; } = new ParameterTimeSeries<CRate> { 3.46153846153846f, 3.46515067139241f, 3.81069752982411f, 4.38351675399239f, 5.16427875620674f, 6.16594407992597f, 7.41879027524054f };
+            public ParameterTimeSeries<KiloWattHoursPerKilogram> Net_Specific_energy_kWh_per_kg { get; } = new ParameterTimeSeries<KiloWattHoursPerKilogram> { 0.13f, 0.1831653037394f, 0.234916583109352f, 0.288037015981149f, 0.344837205812962f, 0.407358733904149f, 0.477525249188024f };
+            public ParameterTimeSeries<KiloWattHoursPerLiter> Net_Energy_density_kWh_per_liter { get; } = new ParameterTimeSeries<KiloWattHoursPerLiter> { 0.325f, 0.4579132593485f, 0.587291457773381f, 0.720092539952873f, 0.862093014532404f, 1.01839683476037f, 1.19381312297006f };
+            public ParameterTimeSeries<EuroPerKiloWattHour> Net_Pack_cost_euro_per_kWh { get; } = new ParameterTimeSeries<EuroPerKiloWattHour> { 246.153846153846f, 156.715126582278f, 109.608592995584f, 80.188875838988f, 60.0831178091917f, 45.6240354482531f, 34.9123062266284f };
+            public ParameterTimeSeries<KilogramPerKiloWattHour> Net_Production_emissions_kg_CO2_per_kWh { get; } = new ParameterTimeSeries<KilogramPerKiloWattHour> { 230.769230769231f, 125.142061367089f, 74.5517942031405f, 46.4567401671687f, 29.6488722182388f, 19.176552061243f, 12.4990347748603f };
         }
         /* REPLACE CODE UNTIL HERE */
     }

@@ -34,9 +34,9 @@ namespace Commons
             {
                 XmlDocument doc = new XmlDocument();
                 doc.Load("paths.xml");
-                _dataRoot = Normalize(doc.DocumentElement?.SelectSingleNode("/paths/data")?.InnerText ?? "");
+                _dataRoot = Normalize(ExpandHomeDirectory(doc.DocumentElement?.SelectSingleNode("/paths/data")?.InnerText ?? ""));
                 _generatedDataRoot = _dataRoot + "generated" + Path.DirectorySeparatorChar;
-                _logsRoot = Normalize(doc.DocumentElement?.SelectSingleNode("/paths/logs")?.InnerText ?? "");
+                _logsRoot = Normalize(ExpandHomeDirectory(doc.DocumentElement?.SelectSingleNode("/paths/logs")?.InnerText ?? ""));
                 _osrm = doc.DocumentElement?.SelectSingleNode("/paths/osrm")?.InnerText ?? "";
 
                 Directory.CreateDirectory(_logsRoot);
@@ -44,20 +44,29 @@ namespace Commons
 
                 _isInitialized = true;
             }
+
+            public static string ExpandHomeDirectory(string path)
+            {
+                if (path.StartsWith("~"))
+                {
+                    string homeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                    return path.Replace("~", homeDirectory);
+                }
+                return path;
+            }
         }
 
         public static readonly string Places = RootPaths.DataRoot + "places.tsv";
         public static readonly string OriginDestinationDensity = RootPaths.DataRoot + "truck_origin_destination_density_grid.tsv";
         public static readonly string Routes = RootPaths.DataRoot + "routes.tsv";
         public static readonly string RouteVehicleType = RootPaths.DataRoot + "routevehicletype.tsv";
-        public static readonly string AceaLongHaulStopCoordinates = RootPaths.DataRoot + "acea_long_haul_stop_locations.tsv";
-        public static readonly string AceaRegionalStopCoordinates = RootPaths.DataRoot + "acea_regional_stop_locations.tsv";
+        public static readonly string RestStopCoordinates = RootPaths.DataRoot + "rest_stop_locations.tsv";
 
         public static readonly string ClusterSequences = RootPaths.GeneratedDataRoot + "clustersequences.bin";
         public static readonly string Nodes = RootPaths.GeneratedDataRoot + "nodes.bin";
         public static readonly string ClusterNodePairs = RootPaths.GeneratedDataRoot + "clusternodepairs.bin";
         public static readonly string BidirectionalNodes = RootPaths.GeneratedDataRoot + "bidirectionalnodes.tsv";
-        public static readonly string AceaAllStopClusters = RootPaths.GeneratedDataRoot + "acea_all_stop_location_matches.tsv";
+        public static readonly string RestStopClusters = RootPaths.GeneratedDataRoot + "rest_stop_location_matches.tsv";
         public static readonly string NodePairs = RootPaths.GeneratedDataRoot + "nodepairs.bin";
         public static readonly string NodePairsClusters = RootPaths.GeneratedDataRoot + "nodepairclusters.bin";
         public static readonly string NodeSequences = RootPaths.GeneratedDataRoot + "nodesequences.bin";

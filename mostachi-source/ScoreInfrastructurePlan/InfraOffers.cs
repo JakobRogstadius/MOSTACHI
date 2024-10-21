@@ -41,6 +41,7 @@ namespace ScoreInfrastructurePlan
         public OtherUnit GetExpectedErsAadt()
         {
             //This equation is valid for heavy vehicles in Sweden
+            //TODO: Modify this for other countries
             return new OtherUnit(FinalErsNetworkScope_km < 1000 ? 4000 : (float)(15000 - Math.Log(Math.Log(FinalErsNetworkScope_km.Val - 500)) * 6200));
         }
     }
