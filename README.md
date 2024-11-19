@@ -8,16 +8,16 @@ Data in similar format covering [all of Europe at NUTS3 resolution](https://data
 
 To study other road networks than the Swedish or other vehicle groups than heavy trucks, new traffic pattern data is required. Follow the steps below to set up the tool for your transport system of interest.
 
-# System architecture
-
-![System architecture of MOSTACHI](docs/fig8_mostachi_architecture.svg)
-
 # Publications
 
 MOSTACHI has been used in the following publications:
 - [Utilization and Economic-Environmental Impacts of Future Electric Road Systems for Heavy Trucks in Sweden (2024)](https://urn.kb.se/resolve?urn=urn%3Anbn%3Ase%3Ari%3Adiva-76076)
 - [Electric Road Systems: A No-Regret Investment with Policy Support](https://www.researchsquare.com/article/rs-3372572/v1) (preprint under review, contains system documentation in the Methods section)
 - [Interaktionseffekter mellan batterielektriska lastbilar, elvägar och statisk laddinfrastruktur: Resultat från högupplöst simulering av godstransporter på det svenska vägnätet under perioden 2020–2050 (2022)](https://urn.kb.se/resolve?urn=urn%3Anbn%3Ase%3Ari%3Adiva-61185)
+
+# System architecture
+
+![System architecture of MOSTACHI](docs/fig8_mostachi_architecture.svg)
 
 # How do I get this code to run?
 
