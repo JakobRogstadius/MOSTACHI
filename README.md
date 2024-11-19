@@ -8,6 +8,10 @@ Data in similar format covering [all of Europe at NUTS3 resolution](https://data
 
 To study other road networks than the Swedish or other vehicle groups than heavy trucks, new traffic pattern data is required. Follow the steps below to set up the tool for your transport system of interest.
 
+# System architecture
+
+![System architecture of MOSTACHI](docs/fig8_mostachi_architecture.svg)
+
 # How do I get this code to run?
 
 The simulation tool is a software program written in C# (.Net). It runs on all the main operating systems, and comes bundled with project files that can be opened in [Visual Studio 2022](https://visualstudio.microsoft.com/vs/community/) or later (a popular programming IDE on Windows) and it does not need any special hardware. If you don't have access to Visual Studio, you can still compile and run the software from the command line, or through another IDE, as long as you have installed the [.Net SDK](https://dotnet.microsoft.com/en-us/download/). The code has been tested with .NET 6.0.
