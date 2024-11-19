@@ -12,6 +12,13 @@ To study other road networks than the Swedish or other vehicle groups than heavy
 
 ![System architecture of MOSTACHI](docs/fig8_mostachi_architecture.svg)
 
+# Publications
+
+MOSTACHI has been used in the following publications:
+- [Utilization and Economic-Environmental Impacts of Future Electric Road Systems for Heavy Trucks in Sweden (2024)](https://urn.kb.se/resolve?urn=urn%3Anbn%3Ase%3Ari%3Adiva-76076)
+- [Electric Road Systems: A No-Regret Investment with Policy Support](https://www.researchsquare.com/article/rs-3372572/v1) (preprint under review, contains system documentation in the Methods section)
+- [Interaktionseffekter mellan batterielektriska lastbilar, elvägar och statisk laddinfrastruktur: Resultat från högupplöst simulering av godstransporter på det svenska vägnätet under perioden 2020–2050 (2022)](https://urn.kb.se/resolve?urn=urn%3Anbn%3Ase%3Ari%3Adiva-61185)
+
 # How do I get this code to run?
 
 The simulation tool is a software program written in C# (.Net). It runs on all the main operating systems, and comes bundled with project files that can be opened in [Visual Studio 2022](https://visualstudio.microsoft.com/vs/community/) or later (a popular programming IDE on Windows) and it does not need any special hardware. If you don't have access to Visual Studio, you can still compile and run the software from the command line, or through another IDE, as long as you have installed the [.Net SDK](https://dotnet.microsoft.com/en-us/download/). The code has been tested with .NET 6.0.
