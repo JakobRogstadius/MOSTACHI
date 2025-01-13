@@ -685,18 +685,25 @@ namespace ScoreInfrastructurePlan
                 File.WriteAllText(runLogPathAdjusted, sbStatsHeader.ToString());
             File.AppendAllText(runLogPathAdjusted, sbStatsDataAdjusted.ToString());
 
-            File.WriteAllText(Paths.ExperimentLog.Replace(".txt", ".stats.txt"), sbStatsHeader.ToString() + sbStatsDataSim.ToString());
-            File.WriteAllText(Paths.ExperimentLog.Replace(".txt", ".adjusted.stats.txt"), sbStatsHeader.ToString() + sbStatsDataAdjusted.ToString());
-            if (logSettings.PrintInfraRasterLog)
-                File.WriteAllText(Paths.ExperimentLog.Replace(".txt", ".infra_raster.txt"), sbInfraRaster.ToString());
-            if (logSettings.PrintDrivingRasterLog)
-                File.WriteAllText(Paths.ExperimentLog.Replace(".txt", ".driving_raster.txt"), sbDriving.ToString());
-            if (logSettings.PrintRoutesLog)
-                File.WriteAllText(Paths.ExperimentLog.Replace(".txt", ".routes.txt"), sbRoutes.ToString());
+            try
+            {
+                File.WriteAllText(Paths.ExperimentLog.Replace(".txt", ".stats.txt"), sbStatsHeader.ToString() + sbStatsDataSim.ToString());
+                File.WriteAllText(Paths.ExperimentLog.Replace(".txt", ".adjusted.stats.txt"), sbStatsHeader.ToString() + sbStatsDataAdjusted.ToString());
+                if (logSettings.PrintInfraRasterLog)
+                    File.WriteAllText(Paths.ExperimentLog.Replace(".txt", ".infra_raster.txt"), sbInfraRaster.ToString());
+                if (logSettings.PrintDrivingRasterLog)
+                    File.WriteAllText(Paths.ExperimentLog.Replace(".txt", ".driving_raster.txt"), sbDriving.ToString());
+                if (logSettings.PrintRoutesLog)
+                    File.WriteAllText(Paths.ExperimentLog.Replace(".txt", ".routes.txt"), sbRoutes.ToString());
 
-            File.AppendAllText(Paths.ExperimentLog.Replace(".txt", ".stats.txt"), Environment.NewLine + "Cumulative system cost is " + Math.Round(cumulativeCost_euro.Val / 1e6f) + " M€" + Environment.NewLine);
+                File.AppendAllText(Paths.ExperimentLog.Replace(".txt", ".stats.txt"), Environment.NewLine + "Cumulative system cost is " + Math.Round(cumulativeCost_euro.Val / 1e6f) + " M€" + Environment.NewLine);
 
-            //CalculateStatsPerERSStage(scenario.Name, logSettings, scenario.SimStartYear, scenario.SimEndYear);
+                //CalculateStatsPerERSStage(scenario.Name, logSettings, scenario.SimStartYear, scenario.SimEndYear);
+            }
+            catch (PathTooLongException e)
+            {
+                Console.WriteLine("Failed to write experiment log, because the path is too long.");
+            }
         }
 
         private static void CalculateStatsPerERSStage(string scenarioName, LogSettings logSettings, ModelYear startYear, ModelYear endYear)

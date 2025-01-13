@@ -24,6 +24,7 @@ namespace ScoreInfrastructurePlan
         public bool ReverseStationOrder { get; set; } = false;
         /// <summary>Sets whether installed charging infrastructure in one time step should carry over to the next time step, or if everything should be recalculated from scratch.</summary>
         public bool InheritInfraPower { get; set; } = true;
+        public Dimensionless Max_ErsToRestStopRatio_EuroPerKWh { get; set; } = null;
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();

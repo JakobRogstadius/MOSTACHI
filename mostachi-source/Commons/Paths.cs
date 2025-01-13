@@ -86,6 +86,9 @@ namespace Commons
         public static void ResetExperimentLogPath(string experimentName = "")
         {
             string s = experimentName.Replace(' ', '_');
+            if (s.Length > 150)
+                s = s.Substring(0, 150) + "_" + experimentName.GetHashCode();
+
             Directory.CreateDirectory(RootPaths.LogsRoot + s);
             ExperimentLogsDir = RootPaths.LogsRoot + s + Path.DirectorySeparatorChar;
             ExperimentLog = RootPaths.LogsRoot + s + Path.DirectorySeparatorChar + "experiment_log_" + s + '_' + DateTime.Now.ToString("yyyy-MM-dd HH-mm").Replace(' ', '_') + ".txt";

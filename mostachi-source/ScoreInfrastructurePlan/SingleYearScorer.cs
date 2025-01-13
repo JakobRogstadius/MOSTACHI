@@ -18,14 +18,12 @@ namespace ScoreInfrastructurePlan
             Dictionary<RouteSegment, (KiloWatts kW_segment, KiloWattsPerKilometer kW_perLaneKm)> inheritedSitePeakPower_kW,
             bool onlyPrecomputeCostsUntilConvergence = false)
         {
-            //	Initiera med gissad brukarkostnad:
-            //		Simulera (undvik att ladda vid svartlistade platser) > Dimensionera infra efter användning och ärvd effekt, vilket ger brukarkostnader
-            //			Om total energi från någon infratyp ändrades mer än 10 %:
-            //				> Lägg till riktigt dyra platser (men inte ERS med ärvd effekt) i svartlista > Räkna om ers-brukarkostnad > Simulera igen
-            //			Om simuleringen var stabil:
-            //				> Returnera laddbeteende, mängd byggd laddinfrastruktur (inkl. ärvd effekt)
-
-            float infraCostSubSampleFq = 0.2f;
+            //	Initialize with estimated user fees for charging.
+            //  Simulate (avoid black-listed locations). Size infra based on utilization and inherited power, which gives new user fees.
+            //		If total energy from any infra type changed by more than a threshold:
+            //	    	Blacklist very expensive sites (except ERS with inherited power). Recompute user fees. Simulate again.
+            //		If the simulation was stable:
+            //			Return charging behavior and built/inherited infra.
 
             Dictionary<RouteSegmentType, KiloWattHoursPerYear> energyPerTypePerYear_prev = new Dictionary<RouteSegmentType, KiloWattHoursPerYear>();
             foreach (RouteSegmentType t in Enum.GetValues(typeof(RouteSegmentType)))
@@ -71,9 +69,6 @@ namespace ScoreInfrastructurePlan
                     if (!onlyPrecomputeCostsUntilConvergence)
                         InfrastructureCost.ResetCache();
 
-                    if (iterationCount == 10)
-                        Console.WriteLine("SIMULATION DID NOT CONVERGE!!!");
-
                     Console.WriteLine("Built ERS length (lane km): " + Math.Round(ersSegmentUserCosts.Sum(n => n.Key.LaneLengthToElectrifyOneOrBothWays_km.Val)) + " km");
 
                     var finalInfraCosts = siteUserCosts.Union(ersSegmentUserCosts).ToDictionary(n => n.Key, n => n.Value);
@@ -85,14 +80,26 @@ namespace ScoreInfrastructurePlan
                     var euroPerkWh_sites = siteUserCosts.ToDictionary(n => n.Key, n => n.Value.Cost_EuroPerkWh);
                     var builtErs = ersSegmentUserCosts.Where(n => inheritedSitePeakPower_kW.ContainsKey(n.Key) || !segmentsWithVeryHighCostPerkWh.Contains(n.Key));
                     var euroPerkWh_ers = new EuroPerKiloWattHour(builtErs.Sum(n => n.Value.Cost_EuroPerYear.Val) / builtErs.Sum(n => n.Value.EnergyDelivered_kWhPerYear.Val));
+
                     Console.WriteLine("Built ERS length (lane km): " + Math.Round(builtErs.Sum(n => n.Key.LaneLengthToElectrifyOneOrBothWays_km.Val)) + " km");
 
                     var blacklist = segmentsWithVeryHighCostPerkWh.Where(n => n.Type != RouteSegmentType.Road || !inheritedSitePeakPower_kW.ContainsKey(n));
+
+                    if (scenario.Max_ErsToRestStopRatio_EuroPerKWh is not null)
+                    {
+                        //If the levelized ERS fee is too high, subsidize it. This logic is motivated by that if ERS exists, it's cheaper to subsidize it than to have low utilization.
+                        var restStops = euroPerkWh_sites.Where(n => n.Key.Type == RouteSegmentType.RestStop && !blacklist.Contains(n.Key));
+                        if (restStops.Any())
+                            euroPerkWh_ers = new(Math.Min(euroPerkWh_ers.Val, restStops.Average(n => n.Value.Val)));
+                    }
+
                     InfrastructureCost.SetCache(year, euroPerkWh_sites, euroPerkWh_ers, blacklist);
                 }
 
                 if (changeRatio < 0.1 || siteUserCosts.Count + ersSegmentUserCosts.Count == 0 || iterationCount == 10)
                 {
+                    if (iterationCount == 10) //Yes, this should be here. It's a warning.
+                        Console.WriteLine("SIMULATION DID NOT CONVERGE!!!");
                     hasConverged = true;
                     Console.WriteLine("Simulation converged after " + (iterationCount + 1) + " iterations.");
                 }

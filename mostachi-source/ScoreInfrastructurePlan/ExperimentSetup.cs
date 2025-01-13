@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -50,16 +51,20 @@ namespace ScoreInfrastructurePlan
              * used to sample OD-coordinates within OD-regions (in CalculateRoutes) is zero-valued for most grid cells.
              */
 
-            //scenarios.AddRange(Experiments.Q1_AllDieselVsAllElectric(sampleRatio));
-
             scenarios.AddRange(Experiments.Q9_ParameterAndPolicyScenarios(sampleRatio));
-
-            //scenarios.AddRange(Experiments.Q10_RestStopFrequency(sampleRatio));
 
             //Downsampling recommended, this evaluates 513 scenarios
             //scenarios.AddRange(Experiments.GetScenarioMatrix(sampleRatio, forcedErsUse: true).Shuffle());
 
-            return (scenarios, sampleRatio, new LogSettings() { PrintRoutesLog = false, PrintDrivingRasterLog = false, PrintInfraRasterLog = false });
+            //Downsampling recommended. Number of scenarios evaluated is 2x the parameter (with and without ERS).
+            //scenarios.AddRange(Experiments.GetMonteCarloScenarios(sampleRatio, 500));
+
+            //scenarios.AddRange(Experiments.Q1_AllDieselVsAllElectric(sampleRatio));
+
+            //scenarios.AddRange(Experiments.Q10_RestStopFrequency(sampleRatio));
+            //scenarios = scenarios.Where(n => n.Name.Contains("neutral")).ToList();
+
+            return (scenarios, sampleRatio, new LogSettings() { PrintRoutesLog = false, PrintDrivingRasterLog = true, PrintInfraRasterLog = true });
         }
     }
 }

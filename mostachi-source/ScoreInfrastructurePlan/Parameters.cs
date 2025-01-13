@@ -97,16 +97,48 @@ namespace ScoreInfrastructurePlan
         {
             _scaledSeries = null;
         }
-        public void SetToMultipleOfDefault(float multiple)
+        public void SetToMultipleOfDefault(float multiple, bool overwrite=true)
         {
-            Dimensionless multiplier = new(multiple);
-            _scaledSeries = new ParameterTimeSeries<T>();
-            for (int i = 0; i < this.Count; i++)
+            if (overwrite || !IsModified)
             {
-                _scaledSeries.Add(this[i] * multiplier);
+                Dimensionless multiplier = new(multiple);
+                _scaledSeries = new ParameterTimeSeries<T>();
+                for (int i = 0; i < this.Count; i++)
+                {
+                    _scaledSeries.Add(this[i] * multiplier);
+                }
+            }
+            else
+            {
+                Dimensionless multiplier = new(multiple);
+                for (int i = 0; i < this.Count; i++)
+                {
+                    _scaledSeries[i] *= multiplier;
+                }
             }
         }
-        
+
+        public void SetToMultiplesOfDefault(float[] multiples, bool overwrite = true)
+        {
+            if (overwrite || !IsModified)
+            {
+                _scaledSeries = new ParameterTimeSeries<T>();
+                for (int i = 0; i < 7; i++)
+                {
+                    Dimensionless multiplier = new(multiples[i]);
+                    _scaledSeries.Add(this[i] * multiplier);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < 7; i++)
+                {
+                    Dimensionless multiplier = new(multiples[i]);
+                    _scaledSeries[i] *= multiplier;
+                }
+            }
+        }
+
         public void Set(IEnumerable<float> values)
         {
             if (values.Count() != this.Count)
@@ -114,6 +146,11 @@ namespace ScoreInfrastructurePlan
             _scaledSeries = new ParameterTimeSeries<T>();
             foreach (float value in values)
                 _scaledSeries.Add(base[0].CreateNewInstance(value));
+        }
+
+        public void SetAllYears(float value)
+        {
+            Set(new float[] { value, value, value, value, value, value, value });
         }
 
         public void SetToExponentialTrendFromFirstValue(float annualMultiple)
@@ -532,8 +569,10 @@ namespace ScoreInfrastructurePlan
 
         public static void ModifySCCAndCO2Tax(float[] SCC, float[] co2TaxRatio)
         {
-            World.CO2_SCC_euro_per_kg.Set(SCC);
-            World.CO2_Tax_ratio_of_SCC.Set(co2TaxRatio);
+            if (SCC != null)
+                World.CO2_SCC_euro_per_kg.Set(SCC);
+            if (co2TaxRatio != null)
+                World.CO2_Tax_ratio_of_SCC.Set(co2TaxRatio);
             List<float> se12 = new();
             List<float> se34 = new();
             List<float> other = new();
@@ -563,6 +602,24 @@ namespace ScoreInfrastructurePlan
                 netCost.Add(euroPerkWh[i] / Battery.Gross_SoC_window_ratio[y].Val);
             }
             Battery.Net_Pack_cost_euro_per_kWh.Set(netCost);
+        }
+
+        public static void ModifyDieselPrices(float[] fossilDiesel_euroPerLiter, float[] renewableDiesel_euroPerLiter)
+        {
+            float[] dieselPrice = new float[7];
+            for (int i = 0; i < 7; i++)
+            {
+                //Guesstimate the new blend ratio
+                ModelYear y = (ModelYear)i;
+                float blendRatio = World.RenewableDiesel_Blend_guess_ratio[y].Val;
+
+                //Adjust diesel price, CO2 emissions and CO2 tax to match
+                dieselPrice[i] = (1 - blendRatio) * fossilDiesel_euroPerLiter[i] + blendRatio * renewableDiesel_euroPerLiter[i];
+            }
+
+            World.FossilDiesel_Price_euro_per_liter.Set(fossilDiesel_euroPerLiter);
+            World.RenewableDiesel_Price_euro_per_liter.Set(renewableDiesel_euroPerLiter);
+            World.Diesel_Price_euro_per_liter.Set(dieselPrice);
         }
 
         public static void ModifyRenewableFuelSupplyCap(float[] literPerYear)
@@ -598,6 +655,14 @@ namespace ScoreInfrastructurePlan
             World.Diesel_Price_euro_per_liter.Set(dieselPrice);
             World.Diesel_Emissions_kg_CO2_per_liter.Set(co2Emissions);
             World.Diesel_CO2_tax_euro_per_liter.Set(co2Tax);
+        }
+
+        public static void ModifyDailyOperatingHoursAndAdjustDepotTimeAndAnnualDistance(float annualChange)
+        {
+            MGV16.ModifyDailyOperatingHoursAndAdjustDepotTimeAndAnnualDistance(annualChange);
+            MGV24.ModifyDailyOperatingHoursAndAdjustDepotTimeAndAnnualDistance(annualChange);
+            HGV40.ModifyDailyOperatingHoursAndAdjustDepotTimeAndAnnualDistance(annualChange);
+            HGV60.ModifyDailyOperatingHoursAndAdjustDepotTimeAndAnnualDistance(annualChange);
         }
 
         public static ParameterTimeSeries<EuroPerKiloWattHour> Ers_UserChargeOverride_ExcludingEnergyAndGridFeesAndTaxes { get; set; }
